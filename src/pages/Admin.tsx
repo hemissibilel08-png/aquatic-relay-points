@@ -141,7 +141,7 @@ export default function Admin() {
     try {
       if (!rainMode) {
         // Activer le mode pluie : basculer les stations vers fallback_zone
-        const { error } = await supabase.rpc('activate_rain_mode');
+        const { error } = await (supabase as any).rpc('activate_rain_mode');
         if (error) throw error;
         
         toast({
@@ -150,7 +150,7 @@ export default function Admin() {
         });
       } else {
         // Désactiver le mode pluie : restaurer les zones normales
-        const { error } = await supabase.rpc('deactivate_rain_mode');
+        const { error } = await (supabase as any).rpc('deactivate_rain_mode');
         if (error) throw error;
         
         toast({
@@ -173,7 +173,7 @@ export default function Admin() {
 
   const createDemoData = async () => {
     try {
-      const { data, error } = await supabase.rpc('create_demo_data');
+      const { data, error } = await (supabase as any).rpc('create_demo_data');
       if (error) throw error;
       
       toast({
@@ -193,7 +193,7 @@ export default function Admin() {
 
   const runQATests = async () => {
     try {
-      const { data, error } = await supabase.rpc('run_qa_tests');
+      const { data, error } = await (supabase as any).rpc('run_qa_tests');
       if (error) throw error;
       
       const result = data as any;
