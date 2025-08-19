@@ -539,6 +539,7 @@ export type Database = {
       }
       staff: {
         Row: {
+          centre_id: string | null
           created_at: string
           id: string
           is_active: boolean
@@ -548,6 +549,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          centre_id?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
@@ -557,6 +559,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          centre_id?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
@@ -565,7 +568,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "staff_centre_id_fkey"
+            columns: ["centre_id"]
+            isOneToOne: false
+            referencedRelation: "centre"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       station: {
         Row: {
@@ -573,6 +584,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          image_url: string | null
           is_active: boolean
           name: string
           qr_code: string
@@ -584,6 +596,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean
           name: string
           qr_code: string
@@ -595,6 +608,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean
           name?: string
           qr_code?: string
@@ -693,9 +707,22 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      create_staff_user: {
+        Args: {
+          p_centre_id?: string
+          p_email: string
+          p_name: string
+          p_role?: Database["public"]["Enums"]["staff_role"]
+        }
+        Returns: Json
+      }
       deactivate_rain_mode: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      get_user_centre_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       get_user_staff_role: {
         Args: Record<PropertyKey, never>
@@ -716,6 +743,10 @@ export type Database = {
       run_qa_tests: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      user_belongs_to_centre: {
+        Args: { centre_uuid: string }
+        Returns: boolean
       }
     }
     Enums: {
