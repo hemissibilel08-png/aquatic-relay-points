@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BiancottoLayout } from "@/components/BiancottoLayout";
 import { useUserCentre } from "@/hooks/useUserCentre";
+import { RoleProtectedRoute } from "@/components/auth/RoleProtectedRoute";
 
 interface Station {
   id: string;
@@ -36,7 +37,7 @@ export default function StationDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAdmin, canManageStations } = useUserCentre();
+  const { isAdmin, canManageStations, canCreateStations } = useUserCentre();
   
   const [station, setStation] = useState<Station | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,12 +52,17 @@ export default function StationDetail() {
 
   useEffect(() => {
     if (isNewStation) {
+      // Vérifier les permissions pour créer une station
+      if (!canCreateStations()) {
+        navigate('/stations');
+        return;
+      }
       setEditing(true);
       setLoading(false);
     } else {
       fetchStation();
     }
-  }, [id]);
+  }, [id, canCreateStations, navigate]);
 
   const fetchStation = async () => {
     try {

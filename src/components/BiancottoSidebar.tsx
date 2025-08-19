@@ -28,6 +28,7 @@ const navigationItems = [
   { title: "Accueil", url: "/", icon: Home },
   { title: "Mon Centre", url: "/centre", icon: Fish },
   { title: "Stations", url: "/stations", icon: Waves },
+  { title: "Énigmes", url: "/enigmes", icon: QrCode },
   { title: "Records", url: "/records", icon: Trophy },
 ];
 
@@ -45,7 +46,7 @@ export function BiancottoSidebar() {
   const { open } = useSidebar();
   const location = useLocation();
   const { sessionCentre, isSessionActive } = useSessionCentre();
-  const { isAdmin, canManageStations } = useUserCentre();
+  const { isAdmin, canAccessStaff, canAccessAdmin } = useUserCentre();
   
   const collapsed = !open;
   
@@ -99,8 +100,8 @@ export function BiancottoSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Staff - Visible seulement pour admin/facilitateur */}
-        {canManageStations() && (
+        {/* Staff - Visible seulement pour staff (admin/facilitateur/rev) */}
+        {canAccessStaff && (
           <SidebarGroup>
             <SidebarGroupLabel>Équipe</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -124,7 +125,7 @@ export function BiancottoSidebar() {
         )}
 
         {/* Administration - Visible seulement pour admin */}
-        {isAdmin && (
+        {canAccessAdmin && (
           <SidebarGroup>
             <SidebarGroupLabel>Admin</SidebarGroupLabel>
             <SidebarGroupContent>

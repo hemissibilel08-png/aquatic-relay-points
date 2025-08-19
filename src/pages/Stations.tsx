@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BiancottoLayout } from "@/components/BiancottoLayout";
+import { useUserCentre } from "@/hooks/useUserCentre";
 
 interface Station {
   id: string;
@@ -46,6 +47,7 @@ export default function Stations() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { canCreateStations } = useUserCentre();
 
   useEffect(() => {
     fetchStations();
@@ -109,13 +111,15 @@ export default function Stations() {
             </p>
           </div>
           
-          <Button 
-            className="bg-gradient-ocean hover:shadow-medium transition-all"
-            onClick={() => navigate('/station/new')}
-          >
-            <Waves className="w-4 h-4 mr-2" />
-            Nouvelle Station
-          </Button>
+          {canCreateStations() && (
+            <Button 
+              className="bg-gradient-ocean hover:shadow-medium transition-all"
+              onClick={() => navigate('/station/new')}
+            >
+              <Waves className="w-4 h-4 mr-2" />
+              Nouvelle Station
+            </Button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">

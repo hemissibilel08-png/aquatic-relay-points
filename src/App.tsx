@@ -5,12 +5,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./components/auth/AuthProvider";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { RoleProtectedRoute } from "./components/auth/RoleProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Centre from "./pages/Centre";
 import Centres from "./pages/Centres";
 import Stations from "./pages/Stations";
 import StationDetail from "./pages/StationDetail";
+import Enigmes from "./pages/Enigmes";
 import Facilitateurs from "./pages/Facilitateurs";
 import Rev from "./pages/Rev";
 import Admin from "./pages/Admin";
@@ -38,11 +40,46 @@ const App = () => (
                 <Centre />
               </ProtectedRoute>
             } />
-            <Route path="/centres" element={
-              <ProtectedRoute>
-                <Centres />
-              </ProtectedRoute>
-            } />
+            <Route
+              path="/centres"
+              element={
+                <ProtectedRoute>
+                  <RoleProtectedRoute requireAdmin>
+                    <Centres />
+                  </RoleProtectedRoute>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <RoleProtectedRoute requireAdmin>
+                    <Admin />
+                  </RoleProtectedRoute>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/facilitateurs"
+              element={
+                <ProtectedRoute>
+                  <RoleProtectedRoute requireStaff>
+                    <Facilitateurs />
+                  </RoleProtectedRoute>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/rev"
+              element={
+                <ProtectedRoute>
+                  <RoleProtectedRoute requiredRole="rev">
+                    <Rev />
+                  </RoleProtectedRoute>
+                </ProtectedRoute>
+              }
+            />
             <Route path="/stations" element={
               <ProtectedRoute>
                 <Stations />
@@ -53,19 +90,9 @@ const App = () => (
                 <StationDetail />
               </ProtectedRoute>
             } />
-            <Route path="/facilitateurs" element={
+            <Route path="/enigmes" element={
               <ProtectedRoute>
-                <Facilitateurs />
-              </ProtectedRoute>
-            } />
-            <Route path="/rev" element={
-              <ProtectedRoute>
-                <Rev />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin" element={
-              <ProtectedRoute>
-                <Admin />
+                <Enigmes />
               </ProtectedRoute>
             } />
             <Route path="/records" element={

@@ -7,7 +7,7 @@ interface UserCentre {
   centre_name: string | null;
   centre_color: string | null;
   centre_profile: 'elementaire' | 'maternelle' | null;
-  user_role: 'admin' | 'facilitateur' | null;
+  user_role: 'admin' | 'facilitateur' | 'rev' | null;
   groups: Array<{
     id: string;
     label: string;
@@ -26,6 +26,7 @@ export function useUserCentre() {
   });
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [hasStaffAccess, setHasStaffAccess] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -87,7 +88,12 @@ export function useUserCentre() {
             groups: groupsData || []
           });
           setIsAdmin(staffData.role === 'admin');
+          setHasStaffAccess(true);
         }
+      } else {
+        // L'utilisateur n'a pas de rôle staff
+        setHasStaffAccess(false);
+        setIsAdmin(false);
       }
 
     } catch (error) {
@@ -109,13 +115,44 @@ export function useUserCentre() {
     return userCentre.groups;
   };
 
+  const isRev = () => {
+    return userCentre.user_role === 'rev';
+  };
+
+  const isFacilitateur = () => {
+    return userCentre.user_role === 'facilitateur';
+  };
+
+  const canAccessAdmin = () => {
+    return isAdmin;
+  };
+
+  const canAccessStaff = () => {
+    return hasStaffAccess && (isAdmin || isFacilitateur() || isRev());
+  };
+
+  const canCreateStations = () => {
+    return isAdmin;
+  };
+
+  const canManageActivities = () => {
+    return isAdmin || isFacilitateur();
+  };
+
   return {
     userCentre,
     loading,
     isAdmin,
+    hasStaffAccess,
     hasAccessToMultipleCentres,
     canManageStations,
     getUserCentreGroups,
+    isRev,
+    isFacilitateur,
+    canAccessAdmin,
+    canAccessStaff,
+    canCreateStations,
+    canManageActivities,
     refetch: fetchUserCentre
   };
 }
