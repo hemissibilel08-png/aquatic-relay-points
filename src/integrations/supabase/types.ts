@@ -671,7 +671,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_staff_role: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["staff_role"]
+      }
+      has_facilitator_on_station: {
+        Args: { station_id_param: string }
+        Returns: boolean
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_facilitateur: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       activity_family: "precision" | "lance" | "endurance" | "coop"
