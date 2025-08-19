@@ -689,6 +689,10 @@ export type Database = {
         }
         Returns: Json
       }
+      create_demo_data: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       deactivate_rain_mode: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -708,6 +712,10 @@ export type Database = {
       is_facilitateur: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      run_qa_tests: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
     }
     Enums: {
