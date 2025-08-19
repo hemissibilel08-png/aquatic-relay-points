@@ -14,509 +14,654 @@ export type Database = {
   }
   public: {
     Tables: {
-      activites: {
+      activity: {
         Row: {
-          active: boolean
-          cooldown_minutes: number | null
           created_at: string
+          default_points: number | null
           description: string | null
+          family: Database["public"]["Enums"]["activity_family"]
           id: string
-          nom: string
-          points_argent: number
-          points_bronze: number
-          points_dessin_fixe: number
-          points_enigme_avec_indice: number
-          points_enigme_sans_indice: number
-          points_or: number
-          points_participation: number
-          points_supervisee_bonus: number
-          repetable: boolean
-          station_id: string
-          type: Database["public"]["Enums"]["activite_type"]
+          is_active: boolean
+          name: string
+          repeatable: boolean
+          requires_facilitator: boolean
+          thresholds_elem: Json | null
+          thresholds_mat: Json | null
+          type: Database["public"]["Enums"]["activity_type"]
           updated_at: string
         }
         Insert: {
-          active?: boolean
-          cooldown_minutes?: number | null
           created_at?: string
+          default_points?: number | null
           description?: string | null
+          family?: Database["public"]["Enums"]["activity_family"]
           id?: string
-          nom: string
-          points_argent?: number
-          points_bronze?: number
-          points_dessin_fixe?: number
-          points_enigme_avec_indice?: number
-          points_enigme_sans_indice?: number
-          points_or?: number
-          points_participation?: number
-          points_supervisee_bonus?: number
-          repetable?: boolean
-          station_id: string
-          type?: Database["public"]["Enums"]["activite_type"]
+          is_active?: boolean
+          name: string
+          repeatable?: boolean
+          requires_facilitator?: boolean
+          thresholds_elem?: Json | null
+          thresholds_mat?: Json | null
+          type?: Database["public"]["Enums"]["activity_type"]
           updated_at?: string
         }
         Update: {
-          active?: boolean
-          cooldown_minutes?: number | null
           created_at?: string
+          default_points?: number | null
           description?: string | null
+          family?: Database["public"]["Enums"]["activity_family"]
           id?: string
-          nom?: string
-          points_argent?: number
-          points_bronze?: number
-          points_dessin_fixe?: number
-          points_enigme_avec_indice?: number
-          points_enigme_sans_indice?: number
-          points_or?: number
-          points_participation?: number
-          points_supervisee_bonus?: number
-          repetable?: boolean
-          station_id?: string
-          type?: Database["public"]["Enums"]["activite_type"]
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "activites_station_id_fkey"
-            columns: ["station_id"]
-            isOneToOne: false
-            referencedRelation: "stations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      centres: {
-        Row: {
-          active: boolean
-          code_qr: string
-          created_at: string
-          id: string
-          nom: string
-          profil: Database["public"]["Enums"]["centre_profil"]
-          updated_at: string
-        }
-        Insert: {
-          active?: boolean
-          code_qr: string
-          created_at?: string
-          id?: string
-          nom: string
-          profil?: Database["public"]["Enums"]["centre_profil"]
-          updated_at?: string
-        }
-        Update: {
-          active?: boolean
-          code_qr?: string
-          created_at?: string
-          id?: string
-          nom?: string
-          profil?: Database["public"]["Enums"]["centre_profil"]
+          is_active?: boolean
+          name?: string
+          repeatable?: boolean
+          requires_facilitator?: boolean
+          thresholds_elem?: Json | null
+          thresholds_mat?: Json | null
+          type?: Database["public"]["Enums"]["activity_type"]
           updated_at?: string
         }
         Relationships: []
       }
-      enigmes: {
+      ad_hoc_points: {
         Row: {
-          active: boolean
+          centre_id: string
           created_at: string
+          event_id: string
+          group_id: string | null
           id: string
-          indice: string | null
-          question: string
-          reponse_correcte: string
-          station_id: string
-          updated_at: string
-        }
-        Insert: {
-          active?: boolean
-          created_at?: string
-          id?: string
-          indice?: string | null
-          question: string
-          reponse_correcte: string
-          station_id: string
-          updated_at?: string
-        }
-        Update: {
-          active?: boolean
-          created_at?: string
-          id?: string
-          indice?: string | null
-          question?: string
-          reponse_correcte?: string
-          station_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "enigmes_station_id_fkey"
-            columns: ["station_id"]
-            isOneToOne: false
-            referencedRelation: "stations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      facilitateur_postes: {
-        Row: {
-          active: boolean
-          code_pin: string | null
-          facilitateur_id: string
-          fin_poste_at: string | null
-          id: string
-          prise_poste_at: string
+          points: number
+          reason: string
+          staff_id: string | null
           station_id: string | null
+          updated_at: string
         }
         Insert: {
-          active?: boolean
-          code_pin?: string | null
-          facilitateur_id: string
-          fin_poste_at?: string | null
+          centre_id: string
+          created_at?: string
+          event_id: string
+          group_id?: string | null
           id?: string
-          prise_poste_at?: string
+          points?: number
+          reason: string
+          staff_id?: string | null
           station_id?: string | null
+          updated_at?: string
         }
         Update: {
-          active?: boolean
-          code_pin?: string | null
-          facilitateur_id?: string
-          fin_poste_at?: string | null
+          centre_id?: string
+          created_at?: string
+          event_id?: string
+          group_id?: string | null
           id?: string
-          prise_poste_at?: string
+          points?: number
+          reason?: string
+          staff_id?: string | null
           station_id?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "facilitateur_postes_facilitateur_id_fkey"
-            columns: ["facilitateur_id"]
+            foreignKeyName: "ad_hoc_points_centre_id_fkey"
+            columns: ["centre_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "centre"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "facilitateur_postes_station_id_fkey"
+            foreignKeyName: "ad_hoc_points_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_hoc_points_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_hoc_points_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ad_hoc_points_station_id_fkey"
             columns: ["station_id"]
             isOneToOne: false
-            referencedRelation: "stations"
+            referencedRelation: "station"
             referencedColumns: ["id"]
           },
         ]
       }
-      groupes: {
+      attempt: {
         Row: {
-          active: boolean
-          animal: Database["public"]["Enums"]["groupe_animal"]
+          activity_id: string
           centre_id: string
           created_at: string
+          ended_at: string | null
+          event_id: string
+          group_id: string | null
           id: string
-          nb_participants: number
+          photo_url: string | null
+          points: number
+          raw_result: string | null
+          started_at: string
           updated_at: string
+          validated_by_staff_id: string | null
         }
         Insert: {
-          active?: boolean
-          animal: Database["public"]["Enums"]["groupe_animal"]
+          activity_id: string
           centre_id: string
           created_at?: string
+          ended_at?: string | null
+          event_id: string
+          group_id?: string | null
           id?: string
-          nb_participants?: number
+          photo_url?: string | null
+          points?: number
+          raw_result?: string | null
+          started_at?: string
           updated_at?: string
+          validated_by_staff_id?: string | null
         }
         Update: {
-          active?: boolean
-          animal?: Database["public"]["Enums"]["groupe_animal"]
+          activity_id?: string
           centre_id?: string
           created_at?: string
+          ended_at?: string | null
+          event_id?: string
+          group_id?: string | null
           id?: string
-          nb_participants?: number
+          photo_url?: string | null
+          points?: number
+          raw_result?: string | null
+          started_at?: string
           updated_at?: string
+          validated_by_staff_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "groupes_centre_id_fkey"
+            foreignKeyName: "attempt_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attempt_centre_id_fkey"
             columns: ["centre_id"]
             isOneToOne: false
-            referencedRelation: "centres"
+            referencedRelation: "centre"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attempt_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attempt_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attempt_validated_by_staff_id_fkey"
+            columns: ["validated_by_staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff"
             referencedColumns: ["id"]
           },
         ]
       }
-      profiles: {
+      centre: {
         Row: {
-          active: boolean
-          centre_id: string | null
+          color: string
           created_at: string
           id: string
-          nom: string
-          prenom: string
-          role: Database["public"]["Enums"]["app_role"]
+          is_active: boolean
+          name: string
+          profile: Database["public"]["Enums"]["profile_type"]
           updated_at: string
         }
         Insert: {
-          active?: boolean
-          centre_id?: string | null
+          color?: string
           created_at?: string
-          id: string
-          nom: string
-          prenom: string
-          role?: Database["public"]["Enums"]["app_role"]
+          id?: string
+          is_active?: boolean
+          name: string
+          profile?: Database["public"]["Enums"]["profile_type"]
           updated_at?: string
         }
         Update: {
-          active?: boolean
-          centre_id?: string | null
+          color?: string
           created_at?: string
           id?: string
-          nom?: string
-          prenom?: string
-          role?: Database["public"]["Enums"]["app_role"]
+          is_active?: boolean
+          name?: string
+          profile?: Database["public"]["Enums"]["profile_type"]
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_profiles_centre"
-            columns: ["centre_id"]
-            isOneToOne: false
-            referencedRelation: "centres"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
-      records: {
+      event: {
         Row: {
-          activite_id: string
-          centre_id: string
           created_at: string
-          date_record: string
+          date: string
           description: string | null
-          groupe_id: string
           id: string
-          unite: string | null
+          is_active: boolean
+          name: string
           updated_at: string
-          valeur: number | null
         }
         Insert: {
-          activite_id: string
-          centre_id: string
           created_at?: string
-          date_record?: string
+          date?: string
           description?: string | null
-          groupe_id: string
           id?: string
-          unite?: string | null
+          is_active?: boolean
+          name: string
           updated_at?: string
-          valeur?: number | null
         }
         Update: {
-          activite_id?: string
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      groups: {
+        Row: {
+          centre_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          label: string
+          updated_at: string
+        }
+        Insert: {
+          centre_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          label: string
+          updated_at?: string
+        }
+        Update: {
           centre_id?: string
           created_at?: string
-          date_record?: string
-          description?: string | null
-          groupe_id?: string
           id?: string
-          unite?: string | null
+          is_active?: boolean
+          label?: string
           updated_at?: string
-          valeur?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "records_activite_id_fkey"
-            columns: ["activite_id"]
-            isOneToOne: false
-            referencedRelation: "activites"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "records_centre_id_fkey"
+            foreignKeyName: "groups_centre_id_fkey"
             columns: ["centre_id"]
             isOneToOne: false
-            referencedRelation: "centres"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "records_groupe_id_fkey"
-            columns: ["groupe_id"]
-            isOneToOne: false
-            referencedRelation: "groupes"
+            referencedRelation: "centre"
             referencedColumns: ["id"]
           },
         ]
       }
-      station_occupations: {
+      occupation: {
         Row: {
-          auto_release_at: string | null
+          by_centre_id: string | null
           created_at: string
-          debut_occupation: string | null
-          facilitateur_id: string | null
-          fin_occupation: string | null
-          groupe_id: string | null
           id: string
+          queue_centre_id: string | null
+          since: string
           station_id: string
           status: Database["public"]["Enums"]["station_status"]
           updated_at: string
         }
         Insert: {
-          auto_release_at?: string | null
+          by_centre_id?: string | null
           created_at?: string
-          debut_occupation?: string | null
-          facilitateur_id?: string | null
-          fin_occupation?: string | null
-          groupe_id?: string | null
           id?: string
+          queue_centre_id?: string | null
+          since?: string
           station_id: string
           status?: Database["public"]["Enums"]["station_status"]
           updated_at?: string
         }
         Update: {
-          auto_release_at?: string | null
+          by_centre_id?: string | null
           created_at?: string
-          debut_occupation?: string | null
-          facilitateur_id?: string | null
-          fin_occupation?: string | null
-          groupe_id?: string | null
           id?: string
+          queue_centre_id?: string | null
+          since?: string
           station_id?: string
           status?: Database["public"]["Enums"]["station_status"]
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "station_occupations_facilitateur_id_fkey"
-            columns: ["facilitateur_id"]
+            foreignKeyName: "occupation_by_centre_id_fkey"
+            columns: ["by_centre_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "centre"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "station_occupations_groupe_id_fkey"
-            columns: ["groupe_id"]
+            foreignKeyName: "occupation_queue_centre_id_fkey"
+            columns: ["queue_centre_id"]
             isOneToOne: false
-            referencedRelation: "groupes"
+            referencedRelation: "centre"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "station_occupations_station_id_fkey"
+            foreignKeyName: "occupation_station_id_fkey"
             columns: ["station_id"]
-            isOneToOne: false
-            referencedRelation: "stations"
+            isOneToOne: true
+            referencedRelation: "station"
             referencedColumns: ["id"]
           },
         ]
       }
-      stations: {
+      presence: {
         Row: {
-          active: boolean
-          categorie: string | null
-          code_qr: string
           created_at: string
-          description: string | null
+          ended_at: string | null
           id: string
-          nom: string
-          type: Database["public"]["Enums"]["station_type"]
+          staff_id: string
+          started_at: string
+          station_id: string
           updated_at: string
-          zone: string | null
         }
         Insert: {
-          active?: boolean
-          categorie?: string | null
-          code_qr: string
           created_at?: string
-          description?: string | null
+          ended_at?: string | null
           id?: string
-          nom: string
-          type?: Database["public"]["Enums"]["station_type"]
+          staff_id: string
+          started_at?: string
+          station_id: string
           updated_at?: string
-          zone?: string | null
         }
         Update: {
-          active?: boolean
-          categorie?: string | null
-          code_qr?: string
           created_at?: string
-          description?: string | null
+          ended_at?: string | null
           id?: string
-          nom?: string
-          type?: Database["public"]["Enums"]["station_type"]
+          staff_id?: string
+          started_at?: string
+          station_id?: string
           updated_at?: string
-          zone?: string | null
-        }
-        Relationships: []
-      }
-      tentatives: {
-        Row: {
-          activite_id: string | null
-          ad_hoc_points: number | null
-          co_validee: boolean
-          commentaire: string | null
-          created_at: string
-          enigme_id: string | null
-          facilitateur_id: string | null
-          groupe_id: string
-          id: string
-          indice_utilise: boolean
-          niveau_perf: Database["public"]["Enums"]["perf_niveau"] | null
-          points_obtenus: number
-          reponse_enigme: string | null
-          type: Database["public"]["Enums"]["activite_type"]
-        }
-        Insert: {
-          activite_id?: string | null
-          ad_hoc_points?: number | null
-          co_validee?: boolean
-          commentaire?: string | null
-          created_at?: string
-          enigme_id?: string | null
-          facilitateur_id?: string | null
-          groupe_id: string
-          id?: string
-          indice_utilise?: boolean
-          niveau_perf?: Database["public"]["Enums"]["perf_niveau"] | null
-          points_obtenus?: number
-          reponse_enigme?: string | null
-          type: Database["public"]["Enums"]["activite_type"]
-        }
-        Update: {
-          activite_id?: string | null
-          ad_hoc_points?: number | null
-          co_validee?: boolean
-          commentaire?: string | null
-          created_at?: string
-          enigme_id?: string | null
-          facilitateur_id?: string | null
-          groupe_id?: string
-          id?: string
-          indice_utilise?: boolean
-          niveau_perf?: Database["public"]["Enums"]["perf_niveau"] | null
-          points_obtenus?: number
-          reponse_enigme?: string | null
-          type?: Database["public"]["Enums"]["activite_type"]
         }
         Relationships: [
           {
-            foreignKeyName: "tentatives_activite_id_fkey"
-            columns: ["activite_id"]
+            foreignKeyName: "presence_staff_id_fkey"
+            columns: ["staff_id"]
             isOneToOne: false
-            referencedRelation: "activites"
+            referencedRelation: "staff"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "tentatives_enigme_id_fkey"
-            columns: ["enigme_id"]
+            foreignKeyName: "presence_station_id_fkey"
+            columns: ["station_id"]
             isOneToOne: false
-            referencedRelation: "enigmes"
+            referencedRelation: "station"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      riddle: {
+        Row: {
+          created_at: string
+          hint_malus_elem: number
+          hint_malus_mat: number
+          hint_text: string | null
+          id: string
+          is_active: boolean
+          points_base: number
+          question: string
+          solution: string
+          station_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hint_malus_elem?: number
+          hint_malus_mat?: number
+          hint_text?: string | null
+          id?: string
+          is_active?: boolean
+          points_base?: number
+          question: string
+          solution: string
+          station_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hint_malus_elem?: number
+          hint_malus_mat?: number
+          hint_text?: string | null
+          id?: string
+          is_active?: boolean
+          points_base?: number
+          question?: string
+          solution?: string
+          station_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "riddle_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "station"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      riddle_answer: {
+        Row: {
+          answer_text: string
+          centre_id: string
+          correct: boolean
+          created_at: string
+          event_id: string
+          group_id: string | null
+          hint_used: boolean
+          id: string
+          points: number
+          riddle_id: string
+          updated_at: string
+        }
+        Insert: {
+          answer_text: string
+          centre_id: string
+          correct?: boolean
+          created_at?: string
+          event_id: string
+          group_id?: string | null
+          hint_used?: boolean
+          id?: string
+          points?: number
+          riddle_id: string
+          updated_at?: string
+        }
+        Update: {
+          answer_text?: string
+          centre_id?: string
+          correct?: boolean
+          created_at?: string
+          event_id?: string
+          group_id?: string | null
+          hint_used?: boolean
+          id?: string
+          points?: number
+          riddle_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "riddle_answer_centre_id_fkey"
+            columns: ["centre_id"]
+            isOneToOne: false
+            referencedRelation: "centre"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "tentatives_facilitateur_id_fkey"
-            columns: ["facilitateur_id"]
+            foreignKeyName: "riddle_answer_event_id_fkey"
+            columns: ["event_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "event"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "tentatives_groupe_id_fkey"
-            columns: ["groupe_id"]
+            foreignKeyName: "riddle_answer_group_id_fkey"
+            columns: ["group_id"]
             isOneToOne: false
-            referencedRelation: "groupes"
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "riddle_answer_riddle_id_fkey"
+            columns: ["riddle_id"]
+            isOneToOne: false
+            referencedRelation: "riddle"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          role: Database["public"]["Enums"]["staff_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          role?: Database["public"]["Enums"]["staff_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          role?: Database["public"]["Enums"]["staff_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      station: {
+        Row: {
+          activity_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          qr_code: string
+          updated_at: string
+          zone_id: string
+        }
+        Insert: {
+          activity_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          qr_code: string
+          updated_at?: string
+          zone_id: string
+        }
+        Update: {
+          activity_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          qr_code?: string
+          updated_at?: string
+          zone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "station_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "activity"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "station_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "zone"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      zone: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_id: string
+          fallback_zone_id: string | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_id: string
+          fallback_zone_id?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_id?: string
+          fallback_zone_id?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zone_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "zone_fallback_zone_id_fkey"
+            columns: ["fallback_zone_id"]
+            isOneToOne: false
+            referencedRelation: "zone"
             referencedColumns: ["id"]
           },
         ]
@@ -526,39 +671,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      calculer_points_tentative: {
-        Args: {
-          p_activite_id: string
-          p_ad_hoc_points: number
-          p_centre_profil: Database["public"]["Enums"]["centre_profil"]
-          p_co_validee: boolean
-          p_indice_utilise: boolean
-          p_niveau_perf: Database["public"]["Enums"]["perf_niveau"]
-          p_type: Database["public"]["Enums"]["activite_type"]
-        }
-        Returns: number
-      }
       get_current_user_centre_id: {
         Args: Record<PropertyKey, never>
         Returns: string
       }
-      get_current_user_role: {
-        Args: Record<PropertyKey, never>
-        Returns: Database["public"]["Enums"]["app_role"]
-      }
-      has_role: {
-        Args: { role_name: Database["public"]["Enums"]["app_role"] }
-        Returns: boolean
-      }
     }
     Enums: {
-      activite_type: "activite" | "enigme" | "dessin_manuel" | "ponctuelle_tech"
-      app_role: "admin" | "rev" | "facilitateur" | "animateur"
-      centre_profil: "maternelle" | "elementaire"
-      groupe_animal: "dauphins" | "tortues" | "requins"
-      perf_niveau: "participation" | "bronze" | "argent" | "or"
+      activity_family: "precision" | "lance" | "endurance" | "coop"
+      activity_type: "autonomie" | "supervisee" | "tech"
+      profile_type: "maternelle" | "elementaire"
+      staff_role: "admin" | "facilitateur"
       station_status: "libre" | "occupee" | "fermee"
-      station_type: "autonome" | "supervisee"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -686,13 +809,11 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      activite_type: ["activite", "enigme", "dessin_manuel", "ponctuelle_tech"],
-      app_role: ["admin", "rev", "facilitateur", "animateur"],
-      centre_profil: ["maternelle", "elementaire"],
-      groupe_animal: ["dauphins", "tortues", "requins"],
-      perf_niveau: ["participation", "bronze", "argent", "or"],
+      activity_family: ["precision", "lance", "endurance", "coop"],
+      activity_type: ["autonomie", "supervisee", "tech"],
+      profile_type: ["maternelle", "elementaire"],
+      staff_role: ["admin", "facilitateur"],
       station_status: ["libre", "occupee", "fermee"],
-      station_type: ["autonome", "supervisee"],
     },
   },
 } as const
