@@ -218,7 +218,7 @@ export default function Facilitateurs() {
         </div>
 
         {/* Vue d'ensemble */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-ocean-primary">
@@ -243,7 +243,29 @@ export default function Facilitateurs() {
               <div className="text-sm text-muted-foreground">Fermées</div>
             </CardContent>
           </Card>
+          <Card className={getActiveFacilitators().length >= 4 ? "border-coral/30 bg-coral/10" : ""}>
+            <CardContent className="p-4 text-center">
+              <div className={`text-2xl font-bold ${getActiveFacilitators().length >= 4 ? "text-coral" : "text-or"}`}>
+                {getActiveFacilitators().length}/4
+              </div>
+              <div className="text-sm text-muted-foreground">Limite supervisées</div>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Alerte limite atteinte */}
+        {getActiveFacilitators().length >= 4 && (
+          <Card className="border-coral/30 bg-coral/10">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 text-coral">
+                <Clock className="w-5 h-5" />
+                <span className="font-medium">
+                  Limite de 4 stations supervisées atteinte - Nouvelles affectations limitées
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Facilitateurs actifs */}
         <div>
@@ -366,7 +388,7 @@ export default function Facilitateurs() {
                         </Button>
                         
                         {/* Assign facilitator */}
-                        {!isOccupied && !isClosed && getAvailableFacilitators().length > 0 && (
+                        {!isOccupied && !isClosed && getAvailableFacilitators().length > 0 && getActiveFacilitators().length < 4 && (
                           <select
                             onChange={(e) => {
                               if (e.target.value) {
@@ -383,6 +405,13 @@ export default function Facilitateurs() {
                               </option>
                             ))}
                           </select>
+                        )}
+
+                        {/* Message si limite atteinte */}
+                        {!isOccupied && !isClosed && getActiveFacilitators().length >= 4 && (
+                          <Badge variant="outline" className="text-coral border-coral/30">
+                            Limite atteinte (4/4)
+                          </Badge>
                         )}
                       </div>
                     </div>

@@ -3,10 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { 
   Settings, 
   Calendar, 
   Cloud, 
+  CloudRain,
+  Sun,
   MapPin, 
   Waves, 
   QrCode, 
@@ -16,7 +19,8 @@ import {
   Users,
   Plus,
   Edit,
-  Trash2
+  Trash2,
+  TestTube
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -70,6 +74,7 @@ export default function Admin() {
   const [stations, setStations] = useState<Station[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rainMode, setRainMode] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -132,6 +137,73 @@ export default function Admin() {
     }
   };
 
+  const toggleRainMode = async () => {
+    try {
+      if (!rainMode) {
+        // Activer le mode pluie : basculer les stations vers fallback_zone
+        await supabase.rpc('activate_rain_mode');
+        toast({
+          title: "Mode Pluie Activé ☔",
+          description: "Stations basculées vers zones de repli",
+        });
+      } else {
+        // Désactiver le mode pluie : restaurer les zones normales
+        await supabase.rpc('deactivate_rain_mode');
+        toast({
+          title: "Mode Normal Restauré ☀️",
+          description: "Stations restaurées en zones extérieures",
+        });
+      }
+      
+      setRainMode(!rainMode);
+      fetchAllData();
+    } catch (error) {
+      console.error('Erreur mode pluie:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de basculer le mode pluie",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const createDemoData = async () => {
+    try {
+      await supabase.rpc('create_demo_data');
+      toast({
+        title: "Données de démo créées ✨",
+        description: "Centres, groupes, stations et énigmes ajoutés",
+      });
+      fetchAllData();
+    } catch (error) {
+      console.error('Erreur création démo:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer les données de démo",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const runQATests = async () => {
+    try {
+      const { data, error } = await supabase.rpc('run_qa_tests');
+      if (error) throw error;
+      
+      toast({
+        title: "Tests QA Terminés ✅",
+        description: `${data?.tests_passed || 0} tests réussis sur ${data?.total_tests || 0}`,
+      });
+    } catch (error) {
+      console.error('Erreur tests QA:', error);
+      toast({
+        title: "Erreur Tests QA",
+        description: "Impossible d'exécuter les tests",
+        variant: "destructive",
+      });
+    }
+  };
+
   const generateQRCode = (stationId: string) => {
     // Génération d'un QR code simple (à remplacer par une vraie librairie)
     const qrData = `${window.location.origin}/station/${stationId}`;
@@ -161,23 +233,37 @@ export default function Admin() {
         </div>
 
         <Tabs defaultValue="events" className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="events">Événements</TabsTrigger>
             <TabsTrigger value="zones">Zones</TabsTrigger>
             <TabsTrigger value="stations">Stations</TabsTrigger>
             <TabsTrigger value="activities">Activités</TabsTrigger>
             <TabsTrigger value="riddles">Énigmes</TabsTrigger>
             <TabsTrigger value="centres">Centres</TabsTrigger>
+            <TabsTrigger value="qa">QA & Tests</TabsTrigger>
           </TabsList>
 
           {/* Gestion Événements */}
           <TabsContent value="events" className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold text-ocean-deep">Événements & Mode Pluie</h2>
-              <Button className="gap-2">
-                <Plus className="w-4 h-4" />
-                Nouvel Événement
-              </Button>
+              <div className="flex items-center gap-4">
+                {/* Toggle Mode Pluie Global */}
+                <div className="flex items-center gap-3 p-3 bg-wave/20 rounded-lg border border-wave/30">
+                  <div className="flex items-center gap-2">
+                    {rainMode ? <CloudRain className="w-5 h-5 text-ocean-primary" /> : <Sun className="w-5 h-5 text-or" />}
+                    <span className="text-sm font-medium">Mode Pluie</span>
+                  </div>
+                  <Switch 
+                    checked={rainMode}
+                    onCheckedChange={toggleRainMode}
+                  />
+                </div>
+                <Button className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Nouvel Événement
+                </Button>
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -213,10 +299,12 @@ export default function Admin() {
                           {event.is_active ? 'Désactiver' : 'Activer'}
                         </Button>
                         
-                        <Button variant="outline" size="sm" className="gap-2">
-                          <Cloud className="w-4 h-4" />
-                          Mode Pluie
-                        </Button>
+                        <Badge 
+                          variant={rainMode ? "default" : "outline"}
+                          className={rainMode ? "bg-ocean-primary text-white" : ""}
+                        >
+                          {rainMode ? "☔ Pluie" : "☀️ Normal"}
+                        </Badge>
                         
                         <Button variant="outline" size="sm">
                           <Edit className="w-4 h-4" />
@@ -398,10 +486,20 @@ export default function Admin() {
           <TabsContent value="centres" className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold text-ocean-deep">Centres & Groupes</h2>
-              <Button className="gap-2">
-                <Plus className="w-4 h-4" />
-                Nouveau Centre
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={createDemoData}
+                  className="gap-2"
+                >
+                  <Fish className="w-4 h-4" />
+                  Créer Données Démo
+                </Button>
+                <Button className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  Nouveau Centre
+                </Button>
+              </div>
             </div>
 
             <div className="text-center py-12">
@@ -412,6 +510,77 @@ export default function Admin() {
               <p className="text-muted-foreground">
                 Configuration des centres aquatiques et de leurs groupes d'animaux
               </p>
+            </div>
+          </TabsContent>
+
+          {/* QA & Tests */}
+          <TabsContent value="qa" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-ocean-deep">Quality Assurance & Tests</h2>
+              <Button 
+                onClick={runQATests}
+                className="gap-2"
+              >
+                <TestTube className="w-4 h-4" />
+                Lancer Tests QA
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Tests automatiques */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TestTube className="w-5 h-5 text-ocean-primary" />
+                    Tests Automatiques
+                  </CardTitle>
+                  <CardDescription>
+                    Vérifications de fonctionnement du système
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>• Collision stations</span>
+                      <Badge variant="outline" className="text-xs">Auto</Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>• Auto-release 20 min</span>
+                      <Badge variant="outline" className="text-xs">Auto</Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>• Profils M/E</span>
+                      <Badge variant="outline" className="text-xs">Auto</Badge>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>• Calcul des Records</span>
+                      <Badge variant="outline" className="text-xs">Auto</Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Tests manuels */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="w-5 h-5 text-coral" />
+                    Tests Fonctionnels
+                  </CardTitle>
+                  <CardDescription>
+                    Vérifications manuelles recommandées
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-2 text-sm">
+                    <div>• Navigation entre pages</div>
+                    <div>• Authentification facilitateurs</div>
+                    <div>• Saisie tentatives & énigmes</div>
+                    <div>• Co-validation supervisée</div>
+                    <div>• Affichage temps réel</div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
         </Tabs>
