@@ -41,9 +41,11 @@ const adminItems = [
 ];
 
 export function BiancottoSidebar() {
-  const { collapsed } = useSidebar();
+  const { open } = useSidebar();
   const location = useLocation();
   const { sessionCentre, isSessionActive } = useSessionCentre();
+  
+  const collapsed = !open;
   
   const isActive = (path: string) => {
     if (path === "/") return location.pathname === "/";
@@ -56,7 +58,7 @@ export function BiancottoSidebar() {
       : "hover:bg-ocean-light/10 text-muted-foreground hover:text-ocean-primary";
 
   return (
-    <Sidebar className={collapsed ? "w-14" : "w-60"} collapsible>
+    <Sidebar className={collapsed ? "w-14" : "w-60"} collapsible="icon">
       <SidebarContent className="bg-gradient-to-b from-foam to-wave/50">
         {/* Header */}
         <div className={`p-4 border-b border-ocean-light/20 ${collapsed ? 'px-2' : ''}`}>

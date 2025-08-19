@@ -25,14 +25,14 @@ interface StationData {
     thresholds_elem: any;
     thresholds_mat: any;
   };
-  riddle?: Array<{
+  riddle?: {
     id: string;
     question: string;
     hint_text?: string;
     points_base: number;
     hint_malus_elem: number;
     hint_malus_mat: number;
-  }>;
+  };
 }
 
 export default function Station() {
@@ -77,7 +77,7 @@ export default function Station() {
             thresholds_elem,
             thresholds_mat
           ),
-          riddle (
+          riddle!inner (
             id,
             question,
             hint_text,
@@ -90,7 +90,14 @@ export default function Station() {
         .single();
 
       if (error) throw error;
-      setStation(data);
+      
+      // Transformer les données pour avoir riddle comme objet unique
+      const transformedData = {
+        ...data,
+        riddle: Array.isArray(data.riddle) && data.riddle.length > 0 ? data.riddle[0] : undefined
+      };
+      
+      setStation(transformedData);
     } catch (error) {
       console.error('Erreur lors du chargement de la station:', error);
       toast({
@@ -187,7 +194,7 @@ export default function Station() {
       const { error } = await supabase
         .from('riddle_answer')
         .insert({
-          riddle_id: station.riddle![0].id,
+          riddle_id: station.riddle!.id,
           centre_id: sessionCentre.centre_id!,
           event_id: 'current-event-id', // À récupérer dynamiquement
           answer_text: riddleAnswer,
