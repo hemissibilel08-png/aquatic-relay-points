@@ -25,6 +25,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BiancottoLayout } from "@/components/BiancottoLayout";
+import { QAScript } from "@/components/QAScript";
 
 interface Event {
   id: string;
@@ -533,62 +534,7 @@ export default function Admin() {
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Tests automatiques */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TestTube className="w-5 h-5 text-ocean-primary" />
-                    Tests Automatiques
-                  </CardTitle>
-                  <CardDescription>
-                    Vérifications de fonctionnement du système
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>• Collision stations</span>
-                      <Badge variant="outline" className="text-xs">Auto</Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>• Auto-release 20 min</span>
-                      <Badge variant="outline" className="text-xs">Auto</Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>• Profils M/E</span>
-                      <Badge variant="outline" className="text-xs">Auto</Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>• Calcul des Records</span>
-                      <Badge variant="outline" className="text-xs">Auto</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Tests manuels */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="w-5 h-5 text-coral" />
-                    Tests Fonctionnels
-                  </CardTitle>
-                  <CardDescription>
-                    Vérifications manuelles recommandées
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="space-y-2 text-sm">
-                    <div>• Navigation entre pages</div>
-                    <div>• Authentification facilitateurs</div>
-                    <div>• Saisie tentatives & énigmes</div>
-                    <div>• Co-validation supervisée</div>
-                    <div>• Affichage temps réel</div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <QAScript />
           </TabsContent>
         </Tabs>
       </div>

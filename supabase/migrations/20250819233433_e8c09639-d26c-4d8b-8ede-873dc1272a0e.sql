@@ -1,0 +1,2 @@
+-- Corriger la fonction calculate_activity_points avec SET search_path
+ALTER FUNCTION public.calculate_activity_points(text, text, text, jsonb, jsonb, text, boolean, boolean, integer) SET search_path = public;
