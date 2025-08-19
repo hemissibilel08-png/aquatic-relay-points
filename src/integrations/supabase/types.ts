@@ -675,6 +675,18 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      has_active_presence_on_station: {
+        Args: { station_uuid: string }
+        Returns: boolean
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_facilitateur: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
     }
     Enums: {
       activity_family: "precision" | "lance" | "endurance" | "coop"
