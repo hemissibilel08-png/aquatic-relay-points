@@ -1,8 +1,19 @@
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Bell, Search, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { User, LogOut } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export function BiancottoHeader() {
+  const { user, signOut } = useAuth();
   return (
     <header className="h-16 bg-card border-b border-border shadow-soft flex items-center justify-between px-6">
       <div className="flex items-center gap-4">
@@ -20,15 +31,27 @@ export function BiancottoHeader() {
           <span>En ligne</span>
         </div>
         
-        <Button variant="ghost" size="sm" className="gap-2">
-          <User className="w-4 h-4" />
-          <span className="hidden sm:inline">Profil</span>
-        </Button>
-        
-        <Button variant="ghost" size="sm" className="gap-2 text-coral hover:text-coral/80">
-          <LogOut className="w-4 h-4" />
-          <span className="hidden sm:inline">Déconnexion</span>
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="rounded-full">
+              <User className="h-4 w-4" />
+              <span className="sr-only">Menu utilisateur</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>
+              {user?.email || 'Utilisateur'}
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>Profil</DropdownMenuItem>
+            <DropdownMenuItem>Paramètres</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={signOut} className="text-destructive">
+              <LogOut className="w-4 h-4 mr-2" />
+              Déconnexion
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );
