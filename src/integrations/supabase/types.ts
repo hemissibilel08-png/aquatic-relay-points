@@ -671,22 +671,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      get_current_user_centre_id: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      has_active_presence_on_station: {
-        Args: { station_uuid: string }
-        Returns: boolean
-      }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
-      is_facilitateur: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
       activity_family: "precision" | "lance" | "endurance" | "coop"
