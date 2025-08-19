@@ -753,7 +753,7 @@ export type Database = {
       activity_family: "precision" | "lance" | "endurance" | "coop"
       activity_type: "autonomie" | "supervisee" | "tech"
       profile_type: "maternelle" | "elementaire"
-      staff_role: "admin" | "facilitateur"
+      staff_role: "admin" | "facilitateur" | "rev"
       station_status: "libre" | "occupee" | "fermee"
     }
     CompositeTypes: {
@@ -885,7 +885,7 @@ export const Constants = {
       activity_family: ["precision", "lance", "endurance", "coop"],
       activity_type: ["autonomie", "supervisee", "tech"],
       profile_type: ["maternelle", "elementaire"],
-      staff_role: ["admin", "facilitateur"],
+      staff_role: ["admin", "facilitateur", "rev"],
       station_status: ["libre", "occupee", "fermee"],
     },
   },
