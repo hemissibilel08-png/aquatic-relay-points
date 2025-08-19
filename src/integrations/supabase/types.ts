@@ -671,6 +671,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_rain_mode: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       calculate_activity_points: {
         Args: {
           activity_family?: string
@@ -684,6 +688,10 @@ export type Database = {
           thresholds_mat?: Json
         }
         Returns: Json
+      }
+      deactivate_rain_mode: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       get_user_staff_role: {
         Args: Record<PropertyKey, never>
