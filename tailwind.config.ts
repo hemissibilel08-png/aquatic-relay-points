@@ -52,6 +52,28 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				// Biancotto - Couleurs maritimes
+				'ocean-deep': 'hsl(var(--ocean-deep))',
+				'ocean-primary': 'hsl(var(--ocean-primary))',
+				'ocean-light': 'hsl(var(--ocean-light))',
+				turquoise: 'hsl(var(--turquoise))',
+				aqua: 'hsl(var(--aqua))',
+				coral: 'hsl(var(--coral))',
+				foam: 'hsl(var(--foam))',
+				sand: 'hsl(var(--sand))',
+				wave: 'hsl(var(--wave))',
+				// Groupes marins
+				dauphin: 'hsl(var(--dauphin))',
+				tortue: 'hsl(var(--tortue))',
+				requin: 'hsl(var(--requin))',
+				// États stations
+				'status-libre': 'hsl(var(--status-libre))',
+				'status-occupee': 'hsl(var(--status-occupee))',
+				'status-fermee': 'hsl(var(--status-fermee))',
+				// Performances
+				bronze: 'hsl(var(--bronze))',
+				argent: 'hsl(var(--argent))',
+				or: 'hsl(var(--or))',
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
@@ -62,6 +84,20 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				}
+			},
+			backgroundImage: {
+				'gradient-ocean': 'var(--gradient-ocean)',
+				'gradient-wave': 'var(--gradient-wave)',
+				'gradient-coral': 'var(--gradient-coral)',
+			},
+			boxShadow: {
+				'soft': 'var(--shadow-soft)',
+				'medium': 'var(--shadow-medium)',
+				'strong': 'var(--shadow-strong)',
+			},
+			transitionProperty: {
+				'wave': 'var(--transition-wave)',
+				'smooth': 'var(--transition-smooth)',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

@@ -538,6 +538,18 @@ export type Database = {
         }
         Returns: number
       }
+      get_current_user_centre_id: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_current_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: { role_name: Database["public"]["Enums"]["app_role"] }
+        Returns: boolean
+      }
     }
     Enums: {
       activite_type: "activite" | "enigme" | "dessin_manuel" | "ponctuelle_tech"
