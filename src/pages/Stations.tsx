@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Waves, QrCode, MapPin, Shield, Zap } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BiancottoLayout } from "@/components/BiancottoLayout";
@@ -44,6 +45,7 @@ export default function Stations() {
   const [stations, setStations] = useState<Station[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchStations();
@@ -107,7 +109,10 @@ export default function Stations() {
             </p>
           </div>
           
-          <Button className="bg-gradient-ocean hover:shadow-medium transition-all">
+          <Button 
+            className="bg-gradient-ocean hover:shadow-medium transition-all"
+            onClick={() => navigate('/station/new')}
+          >
             <Waves className="w-4 h-4 mr-2" />
             Nouvelle Station
           </Button>
@@ -157,12 +162,27 @@ export default function Stations() {
 
                   {/* Actions */}
                   <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                    <Button variant="outline" size="sm" className="gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="gap-2"
+                      onClick={() => {
+                        // Générer QR code ou afficher QR existant
+                        toast({
+                          title: "QR Code",
+                          description: `QR Code: ${station.qr_code}`,
+                        });
+                      }}
+                    >
                       <QrCode className="w-4 h-4" />
                       QR Code
                     </Button>
                     
-                    <Button size="sm" className="bg-gradient-ocean hover:shadow-soft transition-all">
+                    <Button 
+                      size="sm" 
+                      className="bg-gradient-ocean hover:shadow-soft transition-all"
+                      onClick={() => navigate(`/station/${station.id}`)}
+                    >
                       Ouvrir
                     </Button>
                   </div>

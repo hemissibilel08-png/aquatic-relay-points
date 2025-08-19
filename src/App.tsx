@@ -10,7 +10,7 @@ import Auth from "./pages/Auth";
 import Centre from "./pages/Centre";
 import Centres from "./pages/Centres";
 import Stations from "./pages/Stations";
-import Station from "./pages/Station";
+import StationDetail from "./pages/StationDetail";
 import Facilitateurs from "./pages/Facilitateurs";
 import Rev from "./pages/Rev";
 import Admin from "./pages/Admin";
@@ -50,7 +50,7 @@ const App = () => (
             } />
             <Route path="/station/:id" element={
               <ProtectedRoute>
-                <Station />
+                <StationDetail />
               </ProtectedRoute>
             } />
             <Route path="/facilitateurs" element={

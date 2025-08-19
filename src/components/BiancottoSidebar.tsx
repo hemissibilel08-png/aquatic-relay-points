@@ -22,6 +22,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useSessionCentre } from "@/hooks/useSessionCentre";
+import { useUserCentre } from "@/hooks/useUserCentre";
 
 const navigationItems = [
   { title: "Accueil", url: "/", icon: Home },
@@ -44,6 +45,7 @@ export function BiancottoSidebar() {
   const { open } = useSidebar();
   const location = useLocation();
   const { sessionCentre, isSessionActive } = useSessionCentre();
+  const { isAdmin, canManageStations } = useUserCentre();
   
   const collapsed = !open;
   
@@ -97,49 +99,53 @@ export function BiancottoSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Staff */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Équipe</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {staffItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink 
-                      to={item.url} 
-                      className={({ isActive }) => getNavClass(isActive)}
-                    >
-                      <item.icon className="w-4 h-4" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Staff - Visible seulement pour admin/facilitateur */}
+        {canManageStations() && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Équipe</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {staffItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink 
+                        to={item.url} 
+                        className={({ isActive }) => getNavClass(isActive)}
+                      >
+                        <item.icon className="w-4 h-4" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
-        {/* Administration */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Admin</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {adminItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink 
-                      to={item.url} 
-                      className={({ isActive }) => getNavClass(isActive)}
-                    >
-                      <item.icon className="w-4 h-4" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {/* Administration - Visible seulement pour admin */}
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Admin</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink 
+                        to={item.url} 
+                        className={({ isActive }) => getNavClass(isActive)}
+                      >
+                        <item.icon className="w-4 h-4" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
     </Sidebar>
   );
