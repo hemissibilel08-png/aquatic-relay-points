@@ -7,8 +7,13 @@ import { AuthProvider } from "./components/auth/AuthProvider";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Centre from "./pages/Centre";
 import Centres from "./pages/Centres";
 import Stations from "./pages/Stations";
+import Station from "./pages/Station";
+import Facilitateurs from "./pages/Facilitateurs";
+import Rev from "./pages/Rev";
+import Admin from "./pages/Admin";
 import Records from "./pages/Records";
 import NotFound from "./pages/NotFound";
 
@@ -28,6 +33,11 @@ const App = () => (
                 <Index />
               </ProtectedRoute>
             } />
+            <Route path="/centre" element={
+              <ProtectedRoute>
+                <Centre />
+              </ProtectedRoute>
+            } />
             <Route path="/centres" element={
               <ProtectedRoute>
                 <Centres />
@@ -36,6 +46,26 @@ const App = () => (
             <Route path="/stations" element={
               <ProtectedRoute>
                 <Stations />
+              </ProtectedRoute>
+            } />
+            <Route path="/station/:id" element={
+              <ProtectedRoute>
+                <Station />
+              </ProtectedRoute>
+            } />
+            <Route path="/facilitateurs" element={
+              <ProtectedRoute>
+                <Facilitateurs />
+              </ProtectedRoute>
+            } />
+            <Route path="/rev" element={
+              <ProtectedRoute>
+                <Rev />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin" element={
+              <ProtectedRoute>
+                <Admin />
               </ProtectedRoute>
             } />
             <Route path="/records" element={
