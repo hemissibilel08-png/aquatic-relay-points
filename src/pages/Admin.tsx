@@ -141,14 +141,18 @@ export default function Admin() {
     try {
       if (!rainMode) {
         // Activer le mode pluie : basculer les stations vers fallback_zone
-        await supabase.rpc('activate_rain_mode');
+        const { error } = await supabase.rpc('activate_rain_mode');
+        if (error) throw error;
+        
         toast({
           title: "Mode Pluie Activé ☔",
           description: "Stations basculées vers zones de repli",
         });
       } else {
         // Désactiver le mode pluie : restaurer les zones normales
-        await supabase.rpc('deactivate_rain_mode');
+        const { error } = await supabase.rpc('deactivate_rain_mode');
+        if (error) throw error;
+        
         toast({
           title: "Mode Normal Restauré ☀️",
           description: "Stations restaurées en zones extérieures",
@@ -161,7 +165,7 @@ export default function Admin() {
       console.error('Erreur mode pluie:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de basculer le mode pluie",
+        description: "Fonctionnalité en cours de développement",
         variant: "destructive",
       });
     }
@@ -169,7 +173,9 @@ export default function Admin() {
 
   const createDemoData = async () => {
     try {
-      await supabase.rpc('create_demo_data');
+      const { data, error } = await supabase.rpc('create_demo_data');
+      if (error) throw error;
+      
       toast({
         title: "Données de démo créées ✨",
         description: "Centres, groupes, stations et énigmes ajoutés",
@@ -179,7 +185,7 @@ export default function Admin() {
       console.error('Erreur création démo:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de créer les données de démo",
+        description: "Fonctionnalité en cours de développement",
         variant: "destructive",
       });
     }
@@ -190,15 +196,16 @@ export default function Admin() {
       const { data, error } = await supabase.rpc('run_qa_tests');
       if (error) throw error;
       
+      const result = data as any;
       toast({
         title: "Tests QA Terminés ✅",
-        description: `${data?.tests_passed || 0} tests réussis sur ${data?.total_tests || 0}`,
+        description: `${result?.tests_passed || 0} tests réussis sur ${result?.total_tests || 0}`,
       });
     } catch (error) {
       console.error('Erreur tests QA:', error);
       toast({
         title: "Erreur Tests QA",
-        description: "Impossible d'exécuter les tests",
+        description: "Fonctionnalité en cours de développement",
         variant: "destructive",
       });
     }

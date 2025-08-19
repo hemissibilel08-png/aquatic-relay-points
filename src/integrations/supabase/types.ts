@@ -671,6 +671,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_activity_points: {
+        Args: {
+          activity_family?: string
+          activity_type: string
+          attempt_count?: number
+          centre_profile?: string
+          hint_used?: boolean
+          is_co_validated?: boolean
+          raw_result?: string
+          thresholds_elem?: Json
+          thresholds_mat?: Json
+        }
+        Returns: Json
+      }
       get_user_staff_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["staff_role"]
