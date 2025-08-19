@@ -8,6 +8,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signInWithMagicLink: (email: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
@@ -74,6 +75,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  const signInWithMagicLink = async (email: string) => {
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: redirectUrl,
+        }
+      });
+
+      if (error) {
+        toast({
+          title: "Erreur",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Magic Link envoyé",
+          description: "Vérifiez votre email et cliquez sur le lien pour vous connecter",
+        });
+      }
+
+      return { error };
+    } catch (error) {
+      console.error('Magic link error:', error);
+      return { error };
+    }
+  };
+
   const signUp = async (email: string, password: string) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
@@ -128,6 +160,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     session,
     loading,
     signIn,
+    signInWithMagicLink,
     signUp,
     signOut,
   };
