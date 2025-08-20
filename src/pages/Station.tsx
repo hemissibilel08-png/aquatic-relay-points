@@ -467,14 +467,11 @@ export default function Station() {
                    </div>
 
                   {/* Composant de saisie de score simplifié */}
-                  <ScoreEntry
-                    stationId={station.id}
-                    activity={station.activity}
-                    onScoreSubmitted={fetchStation}
-                  />
-                  >
-                    {submitting ? 'Soumission...' : 'Terminer l\'activité'}
-                  </Button>
+                <ScoreEntry
+                  stationId={station.id}
+                  activity={station.activity}
+                  onScoreSubmitted={fetchStation}
+                />
                 </CardContent>
               </Card>
             ) : (
