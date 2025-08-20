@@ -25,7 +25,7 @@ export function ReservationSystem({
   const { toast } = useToast();
   const { sessionCentre } = useSessionCentre();
 
-  const handleReserve = async () => {
+const handleReserve = async () => {
     if (!sessionCentre.centre_id) {
       toast({
         title: "Session requise",

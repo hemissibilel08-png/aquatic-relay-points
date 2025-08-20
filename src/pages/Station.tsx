@@ -14,6 +14,7 @@ import { BiancottoLayout } from "@/components/BiancottoLayout";
 import { useSessionCentre } from "@/hooks/useSessionCentre";
 import { QRScanner } from "@/components/QRScanner";
 import { ReservationSystem } from "@/components/ReservationSystem";
+import { ScoreEntry } from "@/components/ScoreEntry";
 
 interface StationData {
   id: string;
@@ -465,39 +466,12 @@ export default function Station() {
                      />
                    </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="notes">Notes (optionnel)</Label>
-                    <Textarea
-                      id="notes"
-                      placeholder="Commentaires ou observations..."
-                      value={activityNotes}
-                      onChange={(e) => setActivityNotes(e.target.value)}
-                      disabled={!isSessionActive()}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Photo</Label>
-                    <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
-                      <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">
-                        Cliquez pour ajouter une photo (optionnel)
-                      </p>
-                    </div>
-                  </div>
-
-                   {activityResult && (
-                     <div className="p-4 bg-ocean-light/10 rounded-lg">
-                       <p className="text-sm text-ocean-primary">
-                         Points estimés: Calcul en cours...
-                       </p>
-                     </div>
-                   )}
-
-                  <Button 
-                    onClick={submitActivity}
-                    disabled={!activityResult || submitting || !isSessionActive()}
-                    className="w-full bg-gradient-ocean"
+                  {/* Composant de saisie de score simplifié */}
+                  <ScoreEntry
+                    stationId={station.id}
+                    activity={station.activity}
+                    onScoreSubmitted={fetchStation}
+                  />
                   >
                     {submitting ? 'Soumission...' : 'Terminer l\'activité'}
                   </Button>
