@@ -54,7 +54,17 @@ export function useUserCentre() {
 
       if (staffError) {
         console.warn('Utilisateur non trouvé dans staff:', staffError);
-        // L'utilisateur n'est peut-être pas encore configuré
+        // L'utilisateur n'est pas configuré comme staff - pas d'accès
+        setUserCentre({
+          centre_id: null,
+          centre_name: null,
+          centre_color: null,
+          centre_profile: null,
+          user_role: null,
+          groups: []
+        });
+        setIsAdmin(false);
+        setHasStaffAccess(false);
         return;
       }
 

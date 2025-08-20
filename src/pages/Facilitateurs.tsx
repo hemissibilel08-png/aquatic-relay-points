@@ -10,7 +10,7 @@ import { BiancottoLayout } from "@/components/BiancottoLayout";
 interface Facilitator {
   id: string;
   name: string;
-  role: 'facilitateur' | 'admin';
+  role: 'facilitateur' | 'admin' | 'rev';
   is_active: boolean;
   presence?: {
     id: string;
