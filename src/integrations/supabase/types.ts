@@ -703,6 +703,10 @@ export type Database = {
         }
         Returns: Json
       }
+      cancel_reservation: {
+        Args: { p_centre_id: string; p_station_id: string }
+        Returns: Json
+      }
       create_demo_data: {
         Args: Record<PropertyKey, never>
         Returns: Json
@@ -743,6 +747,10 @@ export type Database = {
       is_facilitateur: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      reserve_station: {
+        Args: { p_centre_id: string; p_station_id: string }
+        Returns: Json
       }
       run_qa_tests: {
         Args: Record<PropertyKey, never>

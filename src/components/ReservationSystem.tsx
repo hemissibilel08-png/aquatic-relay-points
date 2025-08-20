@@ -37,23 +37,28 @@ const handleReserve = async () => {
 
     setIsReserving(true);
     try {
-      // Mettre en file d'attente
-      const { error } = await supabase
-        .from('occupation')
-        .update({ 
-          queue_centre_id: sessionCentre.centre_id,
-          since: new Date().toISOString()
-        })
-        .eq('station_id', stationId);
+      // Utiliser la nouvelle fonction RPC pour les réservations
+      const { data, error } = await supabase.rpc('reserve_station', {
+        p_station_id: stationId,
+        p_centre_id: sessionCentre.centre_id
+      });
 
       if (error) throw error;
 
-      toast({
-        title: "Réservation effectuée 🎯",
-        description: `Vous êtes en file d'attente pour ${stationName}`,
-      });
-      
-      onStatusChange?.();
+      const result = data as any;
+      if (result?.success) {
+        toast({
+          title: "Réservation effectuée 🎯",
+          description: result.message || `Vous êtes en file d'attente pour ${stationName}`,
+        });
+        onStatusChange?.();
+      } else {
+        toast({
+          title: "Information",
+          description: result.message || "Impossible de réserver",
+          variant: result.error === 'station_available' ? "default" : "destructive",
+        });
+      }
     } catch (error) {
       console.error('Erreur réservation:', error);
       toast({
@@ -128,10 +133,17 @@ const handleReserve = async () => {
 
       const result = data as any;
       if (result?.success) {
-        toast({
-          title: "Station libérée 📤",
-          description: `${stationName} est maintenant disponible`,
-        });
+        if (result.auto_transfer) {
+          toast({
+            title: "Station transférée 🔄",
+            description: result.message || `Station transférée automatiquement`,
+          });
+        } else {
+          toast({
+            title: "Station libérée 📤",
+            description: result.message || `${stationName} est maintenant disponible`,
+          });
+        }
         onStatusChange?.();
       }
     } catch (error) {
