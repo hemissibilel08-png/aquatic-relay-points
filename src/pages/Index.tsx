@@ -127,11 +127,18 @@ const Index = () => {
       subtitle: "Découvrez les activités maritimes",
       actions: [
         {
+          title: "Scanner une Station",
+          description: "Scanner le QR code pour commencer une activité",
+          icon: Activity,
+          action: () => navigate('/scanner'),
+          gradient: "bg-gradient-ocean"
+        },
+        {
           title: "Voir les Stations",
           description: "Découvrir les activités disponibles",
           icon: Waves,
           action: () => navigate('/stations'),
-          gradient: "bg-gradient-ocean"
+          gradient: "bg-gradient-coral"
         },
         {
           title: "Énigmes Marines",

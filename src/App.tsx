@@ -18,6 +18,7 @@ import Rev from "./pages/Rev";
 import Admin from "./pages/Admin";
 import Records from "./pages/Records";
 import NotFound from "./pages/NotFound";
+import { QRScanner } from "./components/QRScanner";
 
 const queryClient = new QueryClient();
 
@@ -98,6 +99,11 @@ const App = () => (
             <Route path="/records" element={
               <ProtectedRoute>
                 <Records />
+              </ProtectedRoute>
+            } />
+            <Route path="/scanner" element={
+              <ProtectedRoute>
+                <QRScanner />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
