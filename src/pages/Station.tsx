@@ -1,39 +1,41 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Waves, Camera, Trophy, HelpCircle, CheckCircle, XCircle, Upload, Lightbulb } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Activity, QrCode, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BiancottoLayout } from "@/components/BiancottoLayout";
-import { useSessionCentre } from "@/hooks/useSessionCentre";
-import { QRScanner } from "@/components/QRScanner";
 import { ReservationSystem } from "@/components/ReservationSystem";
-import { ScoreEntry } from "@/components/ScoreEntry";
+import { ActivityManager } from "@/components/ActivityManager";
+import { QrCameraScanner } from "@/components/QrCameraScanner";
+import { useSessionCentre } from "@/hooks/useSessionCentre";
 
 interface StationData {
   id: string;
   name: string;
-  description: string;
-  occupation?: {
+  description?: string;
+  image_url?: string;
+  zone: {
     id: string;
-    status: 'libre' | 'occupee' | 'fermee';
-    by_centre_id: string;
-    since: string;
+    name: string;
   };
+  occupation: {
+    status: 'libre' | 'occupee' | 'reservee';
+    by_centre_id?: string;
+    since: string;
+  } | null;
   activity?: {
     id: string;
     name: string;
     description?: string;
     type: string;
+    family?: string;
     default_points: number;
-    thresholds_elem: any;
-    thresholds_mat: any;
+    requires_facilitator: boolean;
+    thresholds_elem?: any;
+    thresholds_mat?: any;
   };
   riddle?: {
     id: string;
@@ -42,85 +44,90 @@ interface StationData {
     points_base: number;
     hint_malus_elem: number;
     hint_malus_mat: number;
+    station_id: string;
   };
 }
 
 export default function Station() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [station, setStation] = useState<StationData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  
-  // État activité
-  const [activityResult, setActivityResult] = useState('');
-  const [activityNotes, setActivityNotes] = useState('');
-  const [photo, setPhoto] = useState<File | null>(null);
-  
-  // État énigme
-  const [riddleAnswer, setRiddleAnswer] = useState('');
-  const [riddleAttempts, setRiddleAttempts] = useState(0);
-  const [hintUsed, setHintUsed] = useState(false);
-  const [riddleResult, setRiddleResult] = useState<'none' | 'correct' | 'incorrect'>('none');
-  
+  const [showQRScanner, setShowQRScanner] = useState(false);
   const { toast } = useToast();
-  const { sessionCentre, isSessionActive } = useSessionCentre();
+  const { sessionCentre } = useSessionCentre();
 
   useEffect(() => {
-    if (id && id !== 'scan') {
+    if (id) {
       fetchStation();
+    } else {
+      setShowQRScanner(true);
     }
   }, [id]);
 
   const fetchStation = async () => {
-    if (!id || id === 'scan') return;
-    
+    if (!id) return;
+
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+
+      // Récupérer les données de la station avec ses relations
+      const { data: stationData, error: stationError } = await supabase
         .from('station')
         .select(`
-          *,
-          occupation (
+          id,
+          name,
+          description,
+          image_url,
+          zone:zone_id (
             id,
-            status,
-            by_centre_id,
-            since
+            name
           ),
-          activity (
+          activity:activity_id (
             id,
             name,
             description,
             type,
+            family,
             default_points,
+            requires_facilitator,
             thresholds_elem,
             thresholds_mat
-          ),
-          riddle!inner (
-            id,
-            question,
-            hint_text,
-            points_base,
-            hint_malus_elem,
-            hint_malus_mat
           )
         `)
         .eq('id', id)
         .single();
 
-      if (error) throw error;
-      
-      // Transformer les données pour avoir riddle comme objet unique et occupation
-      const transformedData = {
-        ...data,
-        riddle: Array.isArray(data.riddle) && data.riddle.length > 0 ? data.riddle[0] : undefined,
-        occupation: Array.isArray(data.occupation) && data.occupation.length > 0 ? data.occupation[0] : undefined
+      if (stationError) throw stationError;
+
+      // Récupérer l'occupation actuelle
+      const { data: occupationData, error: occupationError } = await supabase
+        .from('occupation')
+        .select('status, by_centre_id, since')
+        .eq('station_id', id)
+        .single();
+
+      // Récupérer l'énigme si elle existe
+      const { data: riddleData, error: riddleError } = await supabase
+        .from('riddle')
+        .select('id, question, hint_text, points_base, hint_malus_elem, hint_malus_mat, station_id')
+        .eq('station_id', id)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      const stationWithData: StationData = {
+        ...stationData,
+        occupation: occupationData || null,
+        riddle: riddleData || undefined
       };
-      
-      setStation(transformedData);
+
+      setStation(stationWithData);
+
     } catch (error) {
       console.error('Erreur lors du chargement de la station:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de charger la station",
+        description: "Impossible de charger les données de la station",
         variant: "destructive",
       });
     } finally {
@@ -128,229 +135,40 @@ export default function Station() {
     }
   };
 
-  const calculatePoints = async (result: string): Promise<number> => {
-    if (!station?.activity || !result) return 0;
-    
-    try {
-      // Utiliser la fonction Supabase pour calculer les points
-      const { data, error } = await supabase.rpc('calculate_activity_points', {
-        activity_type: station.activity.type === 'supervisee' ? 'activite' : 'activite',
-        activity_family: 'precision', // À récupérer depuis la DB
-        raw_result: result,
-        thresholds_elem: station.activity.thresholds_elem,
-        thresholds_mat: station.activity.thresholds_mat,
-        centre_profile: sessionCentre.profil,
-        is_co_validated: station.activity.type === 'supervisee',
-        hint_used: false,
-        attempt_count: 1
-      });
-
-      if (error) throw error;
-      return (data as any)?.total || station.activity.default_points;
-    } catch (error) {
-      console.error('Erreur calcul points:', error);
-      return station.activity.default_points;
-    }
+  const handleQRScan = (stationId: string) => {
+    navigate(`/station/${stationId}`);
+    setShowQRScanner(false);
   };
 
-  const getCurrentEvent = async () => {
-    const { data, error } = await supabase
-      .from('event')
-      .select('id')
-      .eq('is_active', true)
-      .single();
-    
-    if (error) throw error;
-    return data.id;
-  };
-
-  const startOccupation = async (): Promise<any> => {
-    if (!station || !sessionCentre.centre_id) return null;
-    
-    try {
-      const { data, error } = await supabase.rpc('start_occupation', {
-        p_station_id: station.id,
-        p_centre_id: sessionCentre.centre_id,
-        p_group_id: null // TODO: récupérer depuis sessionCentre
-      });
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Erreur occupation:', error);
-      return null;
-    }
-  };
-
-  const finishOccupation = async () => {
-    if (!station) return;
-    
-    try {
-      await supabase.rpc('finish_occupation', {
-        p_station_id: station.id
-      });
-    } catch (error) {
-      console.error('Erreur libération:', error);
-    }
-  };
-
-  const submitActivity = async () => {
-    if (!station || !isSessionActive()) return;
-    
-    setSubmitting(true);
-    
-    try {
-      // 1. Tenter d'occuper la station de manière atomique
-      const occupationResult = await startOccupation();
-      
-      if (!occupationResult) {
-        throw new Error('Impossible d\'occuper la station');
-      }
-
-      if (!occupationResult.success) {
-        if (occupationResult.error === 'collision') {
-          // Station déjà occupée - afficher alternatives
-          toast({
-            title: `Station occupée par ${occupationResult.occupied_by}`,
-            description: occupationResult.alternatives?.length > 0 
-              ? `Alternatives: ${occupationResult.alternatives.map((alt: any) => alt.name).join(', ')}`
-              : "Aucune alternative disponible",
-            variant: "destructive",
-          });
-          return;
-        } else if (occupationResult.error === 'needs_facilitator') {
-          toast({
-            title: "Facilitateur requis",
-            description: occupationResult.message,
-            variant: "destructive",
-          });
-          return;
-        }
-      }
-
-      // 2. Obtenir l'événement actuel
-      const eventId = await getCurrentEvent();
-
-      // 3. Calculer les points avec la fonction Supabase
-      const points = await calculatePoints(activityResult);
-      
-      // 4. Enregistrer la tentative
-      const { data: attemptData, error } = await supabase
-        .from('attempt')
-        .insert({
-          activity_id: station.activity!.id,
-          centre_id: sessionCentre.centre_id!,
-          group_id: null, // TODO: récupérer group_id depuis group_label
-          event_id: eventId,
-          raw_result: activityResult,
-          points: points,
-          photo_url: null, // TODO: gérer l'upload photo
-          ended_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // 5. Libérer la station
-      await finishOccupation();
-      
-      toast({
-        title: "🎉 Activité terminée !",
-        description: `+${points} points pour ${sessionCentre.group_label || 'votre groupe'} !`,
-      });
-      
-      // Reset form
-      setActivityResult('');
-      setActivityNotes('');
-      setPhoto(null);
-      
-    } catch (error) {
-      console.error('Erreur soumission activité:', error);
-      toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Impossible de soumettre l'activité",
-        variant: "destructive",
-      });
-      
-      // Libérer la station en cas d'erreur
-      await finishOccupation();
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const submitRiddle = async () => {
-    if (!station?.riddle || !riddleAnswer.trim() || !isSessionActive()) return;
-    
-    setSubmitting(true);
-    
-    try {
-      // 1. Obtenir l'événement actuel
-      const eventId = await getCurrentEvent();
-
-      // 2. Créer une edge function pour vérifier la réponse de manière sécurisée
-      const { data: verificationData, error: verificationError } = await supabase.functions.invoke('verify-riddle', {
-        body: {
-          riddle_id: station.riddle.id,
-          answer: riddleAnswer.trim(),
-          hint_used: hintUsed,
-          centre_profile: sessionCentre.profil
-        }
-      });
-
-      if (verificationError) throw verificationError;
-
-      const { is_correct, points } = verificationData;
-      
-      // 3. Enregistrer la réponse
-      const { error } = await supabase
-        .from('riddle_answer')
-        .insert({
-          riddle_id: station.riddle!.id,
-          centre_id: sessionCentre.centre_id!,
-          group_id: null, // TODO: récupérer group_id depuis group_label
-          event_id: eventId,
-          answer_text: riddleAnswer,
-          correct: is_correct,
-          hint_used: hintUsed,
-          points: points,
-        });
-
-      if (error) throw error;
-      
-      setRiddleResult(is_correct ? 'correct' : 'incorrect');
-      setRiddleAttempts(prev => prev + 1);
-      
-      if (is_correct) {
-        toast({
-          title: "🎉 Bonne réponse !",
-          description: `+${points} points pour ${sessionCentre.group_label || 'votre groupe'} !`,
-        });
-      } else {
-        toast({
-          title: "Réponse incorrecte",
-          description: "Essayez encore !",
-          variant: "destructive",
-        });
-      }
-      
-      setRiddleAnswer('');
-      
-    } catch (error) {
-      console.error('Erreur soumission énigme:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de soumettre la réponse",
-        variant: "destructive",
-      });
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  if (id === 'scan') {
-    return <QRScanner />;
+  if (showQRScanner) {
+    return (
+      <BiancottoLayout>
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <QrCode className="w-5 h-5" />
+                Scanner une Station
+              </CardTitle>
+              <CardDescription>
+                Pointez votre caméra vers le QR code de la station
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <QrCameraScanner />
+              <div className="mt-4 text-center">
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate('/stations')}
+                >
+                  Voir toutes les stations
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </BiancottoLayout>
+    );
   }
 
   if (loading) {
@@ -366,9 +184,20 @@ export default function Station() {
   if (!station) {
     return (
       <BiancottoLayout>
-        <div className="text-center py-12">
-          <h1 className="text-2xl font-bold text-muted-foreground">Station non trouvée</h1>
-        </div>
+        <Card>
+          <CardContent className="p-6 text-center">
+            <AlertTriangle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-muted-foreground mb-2">
+              Station non trouvée
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              La station demandée n'existe pas ou n'est pas disponible
+            </p>
+            <Button onClick={() => navigate('/stations')}>
+              Retour aux stations
+            </Button>
+          </CardContent>
+        </Card>
       </BiancottoLayout>
     );
   }
@@ -376,24 +205,62 @@ export default function Station() {
   return (
     <BiancottoLayout>
       <div className="space-y-6">
-        {/* Header Station */}
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-gradient-ocean rounded-lg flex items-center justify-center">
-            <Waves className="w-6 h-6 text-foam" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-ocean-deep">{station.name}</h1>
-            <p className="text-muted-foreground">{station.description}</p>
-          </div>
-        </div>
+        {/* En-tête de la station */}
+        <Card className="bg-gradient-to-r from-ocean-primary/10 via-turquoise/10 to-foam">
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <CardTitle className="text-2xl text-ocean-deep mb-2">
+                  {station.name}
+                </CardTitle>
+                <CardDescription className="text-base">
+                  {station.description || 'Station d\'activité maritime'}
+                </CardDescription>
+                <div className="flex items-center gap-2 mt-3">
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Activity className="w-3 h-3" />
+                    {station.zone.name}
+                  </Badge>
+                  {station.activity && (
+                    <Badge variant="secondary">
+                      {station.activity.family || station.activity.type}
+                    </Badge>
+                  )}
+                  {station.riddle && (
+                    <Badge variant="secondary" className="bg-coral/20 text-coral">
+                      Énigme disponible
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              {station.image_url && (
+                <div className="w-24 h-24 rounded-lg overflow-hidden bg-wave/20">
+                  <img 
+                    src={station.image_url} 
+                    alt={station.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+            </div>
+          </CardHeader>
+        </Card>
 
-        {/* Session Check */}
-        {!isSessionActive() && (
-          <Card className="border-destructive/20 bg-destructive/5">
+        {/* Avertissement session */}
+        {!sessionCentre.centre_id && (
+          <Card className="border-orange-200 bg-orange-50">
             <CardContent className="p-4">
-              <p className="text-destructive">
-                Vous devez sélectionner un centre et un groupe pour participer aux activités.
-              </p>
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5" />
+                <div>
+                  <p className="font-medium text-orange-900">
+                    Sélectionnez votre groupe
+                  </p>
+                  <p className="text-orange-800 text-sm">
+                    Vous devez choisir un groupe pour participer aux activités et voir les options de réservation
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         )}
@@ -402,192 +269,36 @@ export default function Station() {
         <ReservationSystem
           stationId={station.id}
           stationName={station.name}
-          currentStatus={station.occupation?.status || 'libre'}
+          currentStatus={(station.occupation?.status as 'libre' | 'occupee' | 'fermee') || 'libre'}
           onStatusChange={fetchStation}
         />
 
-        {/* Onglets Activité / Énigmes */}
-        <Tabs defaultValue="activity" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="activity" className="gap-2">
-              <Trophy className="w-4 h-4" />
-              Activité
-            </TabsTrigger>
-            <TabsTrigger value="riddle" className="gap-2">
-              <HelpCircle className="w-4 h-4" />
-              Énigmes
-            </TabsTrigger>
-          </TabsList>
+        {/* Gestionnaire d'activités */}
+        <ActivityManager
+          stationId={station.id}
+          stationName={station.name}
+          activity={station.activity}
+          riddle={station.riddle}
+          onActivityComplete={fetchStation}
+        />
 
-          {/* Onglet Activité */}
-          <TabsContent value="activity" className="space-y-6">
-            {station.activity ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Trophy className="w-5 h-5 text-or" />
-                    {station.activity.name}
-                  </CardTitle>
-                  <CardDescription>
-                    Type: {station.activity.type} • {station.activity.default_points} points de base
-                  </CardDescription>
-                </CardHeader>
-                
-                 <CardContent className="space-y-4">
-                   {/* Règles et conseils pour l'autonomie */}
-                   {station.activity && (
-                     <div className="p-4 bg-ocean-light/5 rounded-lg border border-ocean-primary/20">
-                       <h4 className="font-medium text-ocean-deep mb-2 flex items-center gap-2">
-                         <Trophy className="w-4 h-4" />
-                         Règles & Conseils
-                       </h4>
-                       <div className="text-sm text-muted-foreground space-y-1">
-                         <p>• {station.activity.description}</p>
-                         <p>• Type d'activité: <strong>{station.activity.type}</strong></p>
-                         {station.activity.thresholds_elem && (
-                           <p>• Seuils de performance: Bronze, Argent, Or selon votre niveau</p>
-                         )}
-                         <p>• Points de base: <strong>{station.activity.default_points}</strong></p>
-                         {station.activity.type === 'supervisee' && (
-                           <p className="text-yellow-600">⚠️ Cette activité nécessite la présence d'un facilitateur</p>
-                         )}
-                       </div>
-                     </div>
-                   )}
-
-                   <div className="space-y-2">
-                     <Label htmlFor="result">Résultat</Label>
-                     <Input
-                       id="result"
-                       placeholder="Entrez le résultat (ex: 15.5)"
-                       value={activityResult}
-                       onChange={(e) => setActivityResult(e.target.value)}
-                       disabled={!isSessionActive()}
-                     />
-                   </div>
-
-                  {/* Composant de saisie de score simplifié */}
-                <ScoreEntry
-                  stationId={station.id}
-                  activity={station.activity}
-                  onScoreSubmitted={fetchStation}
-                />
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <p className="text-muted-foreground">
-                    Aucune activité configurée pour cette station.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          {/* Onglet Énigmes */}
-          <TabsContent value="riddle" className="space-y-6">
-            {station.riddle ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <HelpCircle className="w-5 h-5 text-ocean-primary" />
-                    Énigme
-                  </CardTitle>
-                  <CardDescription>
-                    {station.riddle.points_base} points • Tentative #{riddleAttempts + 1}
-                  </CardDescription>
-                </CardHeader>
-                
-                <CardContent className="space-y-4">
-                  <div className="p-4 bg-muted/50 rounded-lg">
-                    <p className="font-medium text-ocean-deep">
-                      {station.riddle.question}
-                    </p>
-                  </div>
-
-                  {riddleResult !== 'none' && (
-                    <div className={`p-4 rounded-lg flex items-center gap-2 ${
-                      riddleResult === 'correct' 
-                        ? 'bg-status-libre/10 text-status-libre' 
-                        : 'bg-destructive/10 text-destructive'
-                    }`}>
-                      {riddleResult === 'correct' ? (
-                        <CheckCircle className="w-5 h-5" />
-                      ) : (
-                        <XCircle className="w-5 h-5" />
-                      )}
-                      <span className="font-medium">
-                        {riddleResult === 'correct' ? 'Bonne réponse !' : 'Réponse incorrecte'}
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="space-y-2">
-                    <Label htmlFor="answer">Votre réponse</Label>
-                    <Input
-                      id="answer"
-                      placeholder="Tapez votre réponse..."
-                      value={riddleAnswer}
-                      onChange={(e) => setRiddleAnswer(e.target.value)}
-                      disabled={!isSessionActive()}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && riddleAnswer.trim()) {
-                          submitRiddle();
-                        }
-                      }}
-                    />
-                  </div>
-
-                  {riddleAttempts >= 2 && station.riddle.hint_text && !hintUsed && (
-                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Lightbulb className="w-4 h-4 text-yellow-600" />
-                        <span className="font-medium text-yellow-800">Indice disponible</span>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setHintUsed(true)}
-                        className="text-yellow-700 border-yellow-300"
-                      >
-                        Afficher l'indice (-{Math.abs(sessionCentre.profil === 'maternelle' 
-                          ? station.riddle.hint_malus_mat 
-                          : station.riddle.hint_malus_elem)} points)
-                      </Button>
-                    </div>
-                  )}
-
-                  {hintUsed && station.riddle.hint_text && (
-                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Lightbulb className="w-4 h-4 text-yellow-600" />
-                        <span className="font-medium text-yellow-800">Indice</span>
-                      </div>
-                      <p className="text-yellow-700">{station.riddle.hint_text}</p>
-                    </div>
-                  )}
-
-                  <Button 
-                    onClick={submitRiddle}
-                    disabled={!riddleAnswer.trim() || submitting || !isSessionActive()}
-                    className="w-full"
-                  >
-                    {submitting ? 'Vérification...' : 'Soumettre la réponse'}
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <p className="text-muted-foreground">
-                    Aucune énigme configurée pour cette station.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-        </Tabs>
+        {/* Navigation */}
+        <div className="flex gap-4">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/stations')}
+            className="flex-1"
+          >
+            Toutes les stations
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowQRScanner(true)}
+            className="flex-1"
+          >
+            Scanner une autre station
+          </Button>
+        </div>
       </div>
     </BiancottoLayout>
   );
