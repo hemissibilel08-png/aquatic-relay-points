@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BiancottoLayout } from "@/components/BiancottoLayout";
 import { useSessionCentre } from "@/hooks/useSessionCentre";
+import { QRScanner } from "@/components/QRScanner";
 
 interface StationData {
   id: string;
@@ -20,6 +21,7 @@ interface StationData {
   activity?: {
     id: string;
     name: string;
+    description?: string;
     type: string;
     default_points: number;
     thresholds_elem: any;
@@ -72,6 +74,7 @@ export default function Station() {
           activity (
             id,
             name,
+            description,
             type,
             default_points,
             thresholds_elem,
@@ -110,22 +113,77 @@ export default function Station() {
     }
   };
 
-  const calculatePoints = (result: string): number => {
+  const calculatePoints = async (result: string): Promise<number> => {
     if (!station?.activity || !result) return 0;
     
-    const numResult = parseFloat(result);
-    if (isNaN(numResult)) return station.activity.default_points;
+    try {
+      // Utiliser la fonction Supabase pour calculer les points
+      const { data, error } = await supabase.rpc('calculate_activity_points', {
+        activity_type: station.activity.type === 'supervisee' ? 'activite' : 'activite',
+        activity_family: 'precision', // À récupérer depuis la DB
+        raw_result: result,
+        thresholds_elem: station.activity.thresholds_elem,
+        thresholds_mat: station.activity.thresholds_mat,
+        centre_profile: sessionCentre.profil,
+        is_co_validated: station.activity.type === 'supervisee',
+        hint_used: false,
+        attempt_count: 1
+      });
+
+      if (error) throw error;
+      return (data as any)?.total || station.activity.default_points;
+    } catch (error) {
+      console.error('Erreur calcul points:', error);
+      return station.activity.default_points;
+    }
+  };
+
+  const getCurrentEvent = async () => {
+    const { data, error } = await supabase
+      .from('event')
+      .select('id')
+      .eq('is_active', true)
+      .single();
     
-    const profile = sessionCentre.profil;
-    const thresholds = profile === 'maternelle' 
-      ? station.activity.thresholds_mat 
-      : station.activity.thresholds_elem;
+    if (error) throw error;
+    return data.id;
+  };
+
+  const occupyStation = async () => {
+    if (!station || !sessionCentre.centre_id) return false;
     
-    if (!thresholds) return station.activity.default_points;
+    try {
+      const { error } = await supabase
+        .from('occupation')
+        .update({
+          status: 'occupee',
+          by_centre_id: sessionCentre.centre_id,
+          since: new Date().toISOString()
+        })
+        .eq('station_id', station.id);
+
+      return !error;
+    } catch (error) {
+      console.error('Erreur occupation:', error);
+      return false;
+    }
+  };
+
+  const releaseStation = async () => {
+    if (!station) return;
     
-    // Logique de calcul basée sur les seuils
-    // À personnaliser selon votre système de points
-    return station.activity.default_points + Math.floor(numResult / 10);
+    try {
+      await supabase
+        .from('occupation')
+        .update({
+          status: 'libre',
+          by_centre_id: null,
+          since: new Date().toISOString()
+        })
+        .eq('station_id', station.id);
+    } catch (error) {
+      console.error('Erreur libération:', error);
+    }
   };
 
   const submitActivity = async () => {
@@ -134,23 +192,45 @@ export default function Station() {
     setSubmitting(true);
     
     try {
-      const points = calculatePoints(activityResult);
+      // 1. Occuper la station
+      const occupied = await occupyStation();
+      if (!occupied) {
+        throw new Error('Impossible d\'occuper la station');
+      }
+
+      // 2. Obtenir l'événement actuel
+      const eventId = await getCurrentEvent();
+
+      // 3. Calculer les points avec la fonction Supabase
+      const points = await calculatePoints(activityResult);
       
-      const { error } = await supabase
+      // 4. Enregistrer la tentative
+      const { data: attemptData, error } = await supabase
         .from('attempt')
         .insert({
           activity_id: station.activity!.id,
           centre_id: sessionCentre.centre_id!,
-          event_id: 'current-event-id', // À récupérer dynamiquement
+          group_id: null, // TODO: récupérer group_id depuis group_label
+          event_id: eventId,
           raw_result: activityResult,
           points: points,
-        });
+          photo_url: null, // TODO: gérer l'upload photo
+          ended_at: new Date().toISOString()
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // 5. Mettre à jour les records si nécessaire
+      // TODO: Implémenter la logique de records
+
+      // 6. Libérer la station
+      await releaseStation();
       
       toast({
-        title: "Activité terminée",
-        description: `${points} points gagnés !`,
+        title: "🎉 Activité terminée !",
+        description: `+${points} points pour ${sessionCentre.group_label || 'votre groupe'} !`,
       });
       
       // Reset form
@@ -162,9 +242,12 @@ export default function Station() {
       console.error('Erreur soumission activité:', error);
       toast({
         title: "Erreur",
-        description: "Impossible de soumettre l'activité",
+        description: error instanceof Error ? error.message : "Impossible de soumettre l'activité",
         variant: "destructive",
       });
+      
+      // Libérer la station en cas d'erreur
+      await releaseStation();
     } finally {
       setSubmitting(false);
     }
@@ -176,42 +259,46 @@ export default function Station() {
     setSubmitting(true);
     
     try {
-      // On ne peut pas vérifier la solution côté client pour des raisons de sécurité
-      // Il faudrait un edge function ou une politique RLS spéciale
-      const isCorrect = riddleAnswer.toLowerCase().trim() === 'solution_placeholder';
-      
-      let points = 0;
-      if (isCorrect) {
-        points = station.riddle.points_base;
-        if (hintUsed) {
-          const malus = sessionCentre.profil === 'maternelle' 
-            ? station.riddle.hint_malus_mat 
-            : station.riddle.hint_malus_elem;
-          points += malus; // malus est négatif
+      // 1. Obtenir l'événement actuel
+      const eventId = await getCurrentEvent();
+
+      // 2. Créer une edge function pour vérifier la réponse de manière sécurisée
+      const { data: verificationData, error: verificationError } = await supabase.functions.invoke('verify-riddle', {
+        body: {
+          riddle_id: station.riddle.id,
+          answer: riddleAnswer.trim(),
+          hint_used: hintUsed,
+          centre_profile: sessionCentre.profil
         }
-      }
+      });
+
+      if (verificationError) throw verificationError;
+
+      const { is_correct, points } = verificationData;
       
+      // 3. Enregistrer la réponse
       const { error } = await supabase
         .from('riddle_answer')
         .insert({
           riddle_id: station.riddle!.id,
           centre_id: sessionCentre.centre_id!,
-          event_id: 'current-event-id', // À récupérer dynamiquement
+          group_id: null, // TODO: récupérer group_id depuis group_label
+          event_id: eventId,
           answer_text: riddleAnswer,
-          correct: isCorrect,
+          correct: is_correct,
           hint_used: hintUsed,
           points: points,
         });
 
       if (error) throw error;
       
-      setRiddleResult(isCorrect ? 'correct' : 'incorrect');
+      setRiddleResult(is_correct ? 'correct' : 'incorrect');
       setRiddleAttempts(prev => prev + 1);
       
-      if (isCorrect) {
+      if (is_correct) {
         toast({
-          title: "Bonne réponse !",
-          description: `${points} points gagnés !`,
+          title: "🎉 Bonne réponse !",
+          description: `+${points} points pour ${sessionCentre.group_label || 'votre groupe'} !`,
         });
       } else {
         toast({
@@ -236,24 +323,7 @@ export default function Station() {
   };
 
   if (id === 'scan') {
-    return (
-      <BiancottoLayout>
-        <div className="flex flex-col items-center justify-center h-96 text-center">
-          <div className="w-24 h-24 bg-gradient-ocean rounded-full flex items-center justify-center mb-6">
-            <Waves className="w-12 h-12 text-foam" />
-          </div>
-          <h1 className="text-2xl font-bold text-ocean-deep mb-4">
-            Scanner QR Code
-          </h1>
-          <p className="text-muted-foreground mb-6">
-            Scannez le QR code d'une station pour accéder aux activités
-          </p>
-          <div className="w-64 h-64 border-2 border-dashed border-ocean-primary/30 rounded-lg flex items-center justify-center">
-            <Camera className="w-16 h-16 text-ocean-primary/50" />
-          </div>
-        </div>
-      </BiancottoLayout>
-    );
+    return <QRScanner />;
   }
 
   if (loading) {
@@ -328,17 +398,38 @@ export default function Station() {
                   </CardDescription>
                 </CardHeader>
                 
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="result">Résultat</Label>
-                    <Input
-                      id="result"
-                      placeholder="Entrez le résultat (ex: 15.5)"
-                      value={activityResult}
-                      onChange={(e) => setActivityResult(e.target.value)}
-                      disabled={!isSessionActive()}
-                    />
-                  </div>
+                 <CardContent className="space-y-4">
+                   {/* Règles et conseils pour l'autonomie */}
+                   {station.activity && (
+                     <div className="p-4 bg-ocean-light/5 rounded-lg border border-ocean-primary/20">
+                       <h4 className="font-medium text-ocean-deep mb-2 flex items-center gap-2">
+                         <Trophy className="w-4 h-4" />
+                         Règles & Conseils
+                       </h4>
+                       <div className="text-sm text-muted-foreground space-y-1">
+                         <p>• {station.activity.description}</p>
+                         <p>• Type d'activité: <strong>{station.activity.type}</strong></p>
+                         {station.activity.thresholds_elem && (
+                           <p>• Seuils de performance: Bronze, Argent, Or selon votre niveau</p>
+                         )}
+                         <p>• Points de base: <strong>{station.activity.default_points}</strong></p>
+                         {station.activity.type === 'supervisee' && (
+                           <p className="text-yellow-600">⚠️ Cette activité nécessite la présence d'un facilitateur</p>
+                         )}
+                       </div>
+                     </div>
+                   )}
+
+                   <div className="space-y-2">
+                     <Label htmlFor="result">Résultat</Label>
+                     <Input
+                       id="result"
+                       placeholder="Entrez le résultat (ex: 15.5)"
+                       value={activityResult}
+                       onChange={(e) => setActivityResult(e.target.value)}
+                       disabled={!isSessionActive()}
+                     />
+                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="notes">Notes (optionnel)</Label>
@@ -361,13 +452,13 @@ export default function Station() {
                     </div>
                   </div>
 
-                  {activityResult && (
-                    <div className="p-4 bg-ocean-light/10 rounded-lg">
-                      <p className="text-sm text-ocean-primary">
-                        Points estimés: {calculatePoints(activityResult)}
-                      </p>
-                    </div>
-                  )}
+                   {activityResult && (
+                     <div className="p-4 bg-ocean-light/10 rounded-lg">
+                       <p className="text-sm text-ocean-primary">
+                         Points estimés: Calcul en cours...
+                       </p>
+                     </div>
+                   )}
 
                   <Button 
                     onClick={submitActivity}
