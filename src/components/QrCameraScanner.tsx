@@ -5,6 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Camera, X, RotateCcw, AlertCircle } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useSessionCentre } from "@/hooks/useSessionCentre";
 
 interface QrCameraScannerProps {
   onClose?: () => void;
@@ -23,6 +25,7 @@ export function QrCameraScanner({ onClose }: QrCameraScannerProps) {
   
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { sessionCentre } = useSessionCentre();
 
   useEffect(() => {
     initializeScanner();
@@ -152,7 +155,7 @@ export function QrCameraScanner({ onClose }: QrCameraScannerProps) {
     }
   };
 
-  const handleQrDetected = (qrText: string) => {
+  const handleQrDetected = async (qrText: string) => {
     cleanup();
     
     try {
@@ -165,7 +168,7 @@ export function QrCameraScanner({ onClose }: QrCameraScannerProps) {
           case 'station':
             const stationId = url.searchParams.get('sid');
             if (stationId) {
-              navigate(`/station/${stationId}`);
+              await handleStationScan(stationId);
               return;
             }
             break;
@@ -200,6 +203,59 @@ export function QrCameraScanner({ onClose }: QrCameraScannerProps) {
         description: "Format non reconnu",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleStationScan = async (stationId: string) => {
+    if (!sessionCentre.centre_id) {
+      toast({
+        title: "Session requise",
+        description: "Veuillez sélectionner un groupe avant de scanner",
+        variant: "destructive",
+      });
+      navigate(`/station/${stationId}`);
+      return;
+    }
+
+    try {
+      // Démarrer automatiquement l'occupation
+      const { data, error } = await supabase.rpc('start_occupation', {
+        p_station_id: stationId,
+        p_centre_id: sessionCentre.centre_id
+      });
+
+      if (error) throw error;
+
+      const result = data as any;
+      if (result?.success) {
+        toast({
+          title: "Station occupée ! 🌊",
+          description: "Vous avez scanné et occupé la station",
+        });
+        navigate(`/station/${stationId}`);
+      } else if (result?.error === 'collision') {
+        toast({
+          title: "Station occupée",
+          description: `Cette station est déjà occupée par ${result.occupied_by}`,
+          variant: "destructive",
+        });
+        navigate(`/station/${stationId}`);
+      } else if (result?.error === 'needs_facilitator') {
+        toast({
+          title: "Facilitateur requis",
+          description: "Cette activité nécessite la présence d'un facilitateur",
+          variant: "destructive",
+        });
+        navigate(`/station/${stationId}`);
+      }
+    } catch (error) {
+      console.error('Erreur occupation:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'occuper la station automatiquement",
+        variant: "destructive",
+      });
+      navigate(`/station/${stationId}`);
     }
   };
 
