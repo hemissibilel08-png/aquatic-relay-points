@@ -170,16 +170,10 @@ export default function Stations() {
                       variant="outline" 
                       size="sm" 
                       className="gap-2"
-                      onClick={() => {
-                        // Générer QR code ou afficher QR existant
-                        toast({
-                          title: "QR Code",
-                          description: `QR Code: ${station.qr_code}`,
-                        });
-                      }}
+                      onClick={() => navigate('/scanner')}
                     >
                       <QrCode className="w-4 h-4" />
-                      QR Code
+                      Scanner
                     </Button>
                     
                     <div className="flex gap-2">

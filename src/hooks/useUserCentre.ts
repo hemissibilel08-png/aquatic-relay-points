@@ -50,9 +50,9 @@ export function useUserCentre() {
         `)
         .eq('user_id', user?.id)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
-      if (staffError) {
+      if (staffError || !staffData) {
         console.warn('Utilisateur non trouvé dans staff:', staffError);
         // L'utilisateur n'est pas configuré comme staff - pas d'accès
         setUserCentre({
