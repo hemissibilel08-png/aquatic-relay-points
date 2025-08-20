@@ -2,13 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Camera, MapPin, Activity, Users } from "lucide-react";
+import { Camera, MapPin, Activity, Users, QrCode } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { BiancottoLayout } from "@/components/BiancottoLayout";
+import { QrCameraScanner } from "@/components/QrCameraScanner";
 
 interface StationWithOccupation {
   id: string;
@@ -26,9 +25,9 @@ interface StationWithOccupation {
 export function QRScanner() {
   const [stations, setStations] = useState<StationWithOccupation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [manualQR, setManualQR] = useState('');
+  const [showCamera, setShowCamera] = useState(false);
   const navigate = useNavigate();
-  const toast = useToast();
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchStations();
@@ -79,7 +78,7 @@ export function QRScanner() {
       setStations(transformedData);
     } catch (error) {
       console.error('Erreur chargement stations:', error);
-      toast.toast({
+      toast({
         title: "Erreur",
         description: "Impossible de charger les stations",
         variant: "destructive",
@@ -96,20 +95,15 @@ export function QRScanner() {
     }
   };
 
-  const handleManualQR = () => {
-    if (!manualQR.trim()) return;
-    
-    // Recherche de la station par QR code
-    const station = stations.find(s => s.qr_code.toLowerCase() === manualQR.toLowerCase());
-    if (station) {
-      navigate(`/station/${station.id}`);
-    } else {
-      toast.toast({
-        title: "QR Code invalide",
-        description: "Ce QR code ne correspond à aucune station",
-        variant: "destructive",
-      });
-    }
+  const handleStationCollision = (stationData: any) => {
+    const alternatives = stationData.alternatives || [];
+    toast({
+      title: `Station occupée par ${stationData.occupied_by}`,
+      description: alternatives.length > 0 
+        ? `Alternatives disponibles: ${alternatives.map((alt: any) => alt.name).join(', ')}`
+        : "Aucune alternative disponible",
+      variant: "destructive",
+    });
   };
 
   const getStatusColor = (status: string) => {
@@ -129,6 +123,10 @@ export function QRScanner() {
       default: return 'Inconnue';
     }
   };
+
+  if (showCamera) {
+    return <QrCameraScanner onClose={() => setShowCamera(false)} />;
+  }
 
   if (loading) {
     return (
@@ -152,36 +150,29 @@ export function QRScanner() {
             Scanner une Station
           </h1>
           <p className="text-muted-foreground">
-            Choisissez une station ou scannez son QR code
+            Scannez le QR code d'une station avec votre caméra
           </p>
         </div>
 
-        {/* Saisie manuelle QR */}
+        {/* Scanner caméra */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Camera className="w-5 h-5" />
-              QR Code Manuel
+              <QrCode className="w-5 h-5" />
+              Scanner avec la Caméra
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <Label htmlFor="qr">Code QR de la station</Label>
-                <Input
-                  id="qr"
-                  placeholder="Ex: QR_STATION_CECIFOOT_001"
-                  value={manualQR}
-                  onChange={(e) => setManualQR(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleManualQR()}
-                />
-              </div>
-              <div className="flex items-end">
-                <Button onClick={handleManualQR} disabled={!manualQR.trim()}>
-                  Scanner
-                </Button>
-              </div>
-            </div>
+            <Button 
+              onClick={() => setShowCamera(true)}
+              className="w-full bg-gradient-ocean text-lg py-6"
+            >
+              <Camera className="w-6 h-6 mr-3" />
+              Ouvrir le Scanner QR
+            </Button>
+            <p className="text-xs text-center text-muted-foreground">
+              Pointez la caméra vers le QR code biancotto:// d'une station
+            </p>
           </CardContent>
         </Card>
 

@@ -149,38 +149,31 @@ export default function Station() {
     return data.id;
   };
 
-  const occupyStation = async () => {
-    if (!station || !sessionCentre.centre_id) return false;
+  const startOccupation = async (): Promise<any> => {
+    if (!station || !sessionCentre.centre_id) return null;
     
     try {
-      const { error } = await supabase
-        .from('occupation')
-        .update({
-          status: 'occupee',
-          by_centre_id: sessionCentre.centre_id,
-          since: new Date().toISOString()
-        })
-        .eq('station_id', station.id);
+      const { data, error } = await supabase.rpc('start_occupation', {
+        p_station_id: station.id,
+        p_centre_id: sessionCentre.centre_id,
+        p_group_id: null // TODO: récupérer depuis sessionCentre
+      });
 
-      return !error;
+      if (error) throw error;
+      return data;
     } catch (error) {
       console.error('Erreur occupation:', error);
-      return false;
+      return null;
     }
   };
 
-  const releaseStation = async () => {
+  const finishOccupation = async () => {
     if (!station) return;
     
     try {
-      await supabase
-        .from('occupation')
-        .update({
-          status: 'libre',
-          by_centre_id: null,
-          since: new Date().toISOString()
-        })
-        .eq('station_id', station.id);
+      await supabase.rpc('finish_occupation', {
+        p_station_id: station.id
+      });
     } catch (error) {
       console.error('Erreur libération:', error);
     }
@@ -192,10 +185,32 @@ export default function Station() {
     setSubmitting(true);
     
     try {
-      // 1. Occuper la station
-      const occupied = await occupyStation();
-      if (!occupied) {
+      // 1. Tenter d'occuper la station de manière atomique
+      const occupationResult = await startOccupation();
+      
+      if (!occupationResult) {
         throw new Error('Impossible d\'occuper la station');
+      }
+
+      if (!occupationResult.success) {
+        if (occupationResult.error === 'collision') {
+          // Station déjà occupée - afficher alternatives
+          toast({
+            title: `Station occupée par ${occupationResult.occupied_by}`,
+            description: occupationResult.alternatives?.length > 0 
+              ? `Alternatives: ${occupationResult.alternatives.map((alt: any) => alt.name).join(', ')}`
+              : "Aucune alternative disponible",
+            variant: "destructive",
+          });
+          return;
+        } else if (occupationResult.error === 'needs_facilitator') {
+          toast({
+            title: "Facilitateur requis",
+            description: occupationResult.message,
+            variant: "destructive",
+          });
+          return;
+        }
       }
 
       // 2. Obtenir l'événement actuel
@@ -222,11 +237,8 @@ export default function Station() {
 
       if (error) throw error;
 
-      // 5. Mettre à jour les records si nécessaire
-      // TODO: Implémenter la logique de records
-
-      // 6. Libérer la station
-      await releaseStation();
+      // 5. Libérer la station
+      await finishOccupation();
       
       toast({
         title: "🎉 Activité terminée !",
@@ -247,7 +259,7 @@ export default function Station() {
       });
       
       // Libérer la station en cas d'erreur
-      await releaseStation();
+      await finishOccupation();
     } finally {
       setSubmitting(false);
     }

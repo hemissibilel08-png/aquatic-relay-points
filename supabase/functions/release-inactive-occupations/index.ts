@@ -1,154 +1,142 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.55.0'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-Deno.serve(async (req) => {
+serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    console.log('🔄 Starting inactive occupations release process');
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    });
+    console.log('🔄 Checking for inactive occupations...')
 
-    // Calculate cutoff time (20 minutes ago)
-    const cutoffTime = new Date();
-    cutoffTime.setMinutes(cutoffTime.getMinutes() - 20);
-    const cutoffISO = cutoffTime.toISOString();
+    // Définir le seuil d'inactivité à 20 minutes
+    const cutoffTime = new Date(Date.now() - 20 * 60 * 1000).toISOString()
 
-    console.log(`📅 Releasing occupations older than: ${cutoffISO}`);
-
-    // Find stations occupied for more than 20 minutes
-    const { data: staleOccupations, error: findError } = await supabase
+    // Récupérer les occupations inactives depuis plus de 20 minutes
+    const { data: staleOccupations, error: fetchError } = await supabaseClient
       .from('occupation')
       .select(`
         id,
         station_id,
-        status,
         by_centre_id,
         since,
         station!inner (
+          id,
           name,
-          activity (
+          activity!inner (
             requires_facilitator
           )
         )
       `)
       .eq('status', 'occupee')
-      .lt('since', cutoffISO);
+      .lt('since', cutoffTime)
 
-    if (findError) {
-      console.error('❌ Error finding stale occupations:', findError);
-      throw findError;
+    if (fetchError) {
+      throw new Error(`Erreur lors de la récupération des occupations: ${fetchError.message}`)
     }
 
-    console.log(`🔍 Found ${staleOccupations?.length || 0} stale occupations`);
+    let releasedCount = 0
+    let closedCount = 0
 
-    if (!staleOccupations || staleOccupations.length === 0) {
-      console.log('✅ No stale occupations found');
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: 'No stale occupations found',
-          released: 0 
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+    if (staleOccupations && staleOccupations.length > 0) {
+      console.log(`📋 Trouvé ${staleOccupations.length} occupation(s) inactive(s)`)
+
+      for (const occupation of staleOccupations) {
+        const station = occupation.station
+        const needsFacilitator = station.activity?.requires_facilitator
+
+        let newStatus = 'libre'
+
+        // Si l'activité nécessite un facilitateur, vérifier s'il y en a un présent
+        if (needsFacilitator) {
+          const { data: activeFacilitators, error: facilitatorError } = await supabaseClient
+            .from('presence')
+            .select(`
+              id,
+              staff!inner (
+                id,
+                role,
+                is_active
+              )
+            `)
+            .eq('station_id', station.id)
+            .is('ended_at', null)
+            .eq('staff.role', 'facilitateur')
+            .eq('staff.is_active', true)
+
+          if (facilitatorError) {
+            console.error(`❌ Erreur vérification facilitateur pour station ${station.name}:`, facilitatorError)
+            continue
+          }
+
+          // Si pas de facilitateur présent, fermer la station
+          if (!activeFacilitators || activeFacilitators.length === 0) {
+            newStatus = 'fermee'
+            closedCount++
+          } else {
+            releasedCount++
+          }
+        } else {
+          releasedCount++
         }
-      );
-    }
 
-    const results = [];
-    
-    for (const occupation of staleOccupations) {
-      const isSupervised = occupation.station.activity?.requires_facilitator;
-      
-      // Check if supervised station has active facilitator
-      let newStatus = 'libre';
-      
-      if (isSupervised) {
-        const { data: activeFacilitator } = await supabase
-          .from('presence')
-          .select('id')
-          .eq('station_id', occupation.station_id)
-          .is('ended_at', null)
-          .limit(1);
-        
-        if (!activeFacilitator || activeFacilitator.length === 0) {
-          newStatus = 'fermee'; // Supervised without facilitator = closed
+        // Mettre à jour le statut de l'occupation
+        const { error: updateError } = await supabaseClient
+          .from('occupation')
+          .update({
+            status: newStatus,
+            by_centre_id: null,
+            since: new Date().toISOString()
+          })
+          .eq('id', occupation.id)
+
+        if (updateError) {
+          console.error(`❌ Erreur lors de la mise à jour de l'occupation ${occupation.id}:`, updateError)
+        } else {
+          console.log(`✅ Station "${station.name}" → ${newStatus === 'libre' ? 'libérée' : 'fermée'}`)
         }
-      }
-
-      // Update occupation status
-      const { error: updateError } = await supabase
-        .from('occupation')
-        .update({
-          status: newStatus,
-          by_centre_id: null,
-          since: new Date().toISOString()
-        })
-        .eq('id', occupation.id);
-
-      if (updateError) {
-        console.error(`❌ Error updating occupation ${occupation.id}:`, updateError);
-        results.push({
-          station: occupation.station.name,
-          success: false,
-          error: updateError.message
-        });
-      } else {
-        console.log(`✅ Released station "${occupation.station.name}" -> ${newStatus}`);
-        results.push({
-          station: occupation.station.name,
-          success: true,
-          previousStatus: 'occupee',
-          newStatus: newStatus,
-          wasInactiveFor: `${Math.round((Date.now() - new Date(occupation.since).getTime()) / (1000 * 60))} minutes`
-        });
       }
     }
 
-    const successCount = results.filter(r => r.success).length;
-    console.log(`🎯 Successfully released ${successCount}/${results.length} stations`);
+    console.log(`🎯 Auto-release terminé: ${releasedCount} libérées, ${closedCount} fermées`)
 
     return new Response(
-      JSON.stringify({
+      JSON.stringify({ 
         success: true,
-        message: `Released ${successCount} inactive occupations`,
-        released: successCount,
-        details: results
+        processed: staleOccupations?.length || 0,
+        released: releasedCount,
+        closed: closedCount,
+        timestamp: new Date().toISOString()
       }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      },
+    )
 
   } catch (error) {
-    console.error('💥 Function error:', error);
+    console.error('💥 Erreur dans release-inactive-occupations:', error)
     
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error.message
+      JSON.stringify({ 
+        success: false, 
+        error: error.message 
       }),
-      { 
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
-    );
+      },
+    )
   }
-});
+})

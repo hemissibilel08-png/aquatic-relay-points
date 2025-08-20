@@ -20,6 +20,7 @@ import Admin from "./pages/Admin";
 import Records from "./pages/Records";
 import Historique from "./pages/Historique";
 import NotFound from "./pages/NotFound";
+import Scan from "./pages/Scan";
 import { QRScanner } from "./components/QRScanner";
 
 const queryClient = new QueryClient();
@@ -113,6 +114,11 @@ const App = () => (
             <Route path="/historique" element={
               <ProtectedRoute>
                 <Historique />
+              </ProtectedRoute>
+            } />
+            <Route path="/scan" element={
+              <ProtectedRoute>
+                <Scan />
               </ProtectedRoute>
             } />
             <Route path="/scanner" element={

@@ -720,6 +720,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      finish_occupation: {
+        Args: { p_station_id: string }
+        Returns: Json
+      }
       get_user_centre_id: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -742,6 +746,10 @@ export type Database = {
       }
       run_qa_tests: {
         Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      start_occupation: {
+        Args: { p_centre_id: string; p_group_id?: string; p_station_id: string }
         Returns: Json
       }
       user_belongs_to_centre: {
