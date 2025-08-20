@@ -21,7 +21,7 @@ import Records from "./pages/Records";
 import Historique from "./pages/Historique";
 import NotFound from "./pages/NotFound";
 import Scan from "./pages/Scan";
-import { QRScanner } from "./components/QRScanner";
+
 
 const queryClient = new QueryClient();
 
@@ -123,7 +123,7 @@ const App = () => (
             } />
             <Route path="/scanner" element={
               <ProtectedRoute>
-                <QRScanner />
+                <Scan />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

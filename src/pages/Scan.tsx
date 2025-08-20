@@ -1,5 +1,9 @@
 import { QrCameraScanner } from "@/components/QrCameraScanner";
 
 export default function Scan() {
-  return <QrCameraScanner />;
+  return (
+    <div className="min-h-screen bg-background">
+      <QrCameraScanner />
+    </div>
+  );
 }

@@ -216,28 +216,15 @@ const handleReserve = async () => {
 
         <div className="flex gap-2">
           {currentStatus === 'libre' && (
-            <>
-              <Button 
-                onClick={handleOccupy}
-                disabled={isOccupying || !sessionCentre.centre_id}
-                className="flex-1 bg-gradient-ocean hover:shadow-soft transition-all"
-                size="sm"
-              >
-                <Users className="w-4 h-4 mr-1" />
-                {isOccupying ? "Occupation..." : "J'y suis !"}
-              </Button>
-              
-              <Button 
-                onClick={handleReserve}
-                disabled={isReserving || !sessionCentre.centre_id}
-                variant="outline"
-                className="flex-1"
-                size="sm"
-              >
-                <Clock className="w-4 h-4 mr-1" />
-                {isReserving ? "Réservation..." : "Réserver"}
-              </Button>
-            </>
+            <Button 
+              onClick={handleReserve}
+              disabled={isReserving || !sessionCentre.centre_id}
+              className="w-full bg-gradient-ocean hover:shadow-soft transition-all"
+              size="sm"
+            >
+              <Clock className="w-4 h-4 mr-1" />
+              {isReserving ? "Réservation..." : "Réserver"}
+            </Button>
           )}
 
           {currentStatus === 'occupee' && sessionCentre.centre_id && (
