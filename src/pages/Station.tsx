@@ -22,7 +22,7 @@ interface StationData {
     name: string;
   };
   occupation: {
-    status: 'libre' | 'occupee' | 'reservee';
+    status: 'libre' | 'occupee' | 'fermee';
     by_centre_id?: string;
     since: string;
   } | null;
@@ -269,7 +269,7 @@ export default function Station() {
         <ReservationSystem
           stationId={station.id}
           stationName={station.name}
-          currentStatus={(station.occupation?.status as 'libre' | 'occupee' | 'fermee') || 'libre'}
+          currentStatus={station.occupation?.status || 'libre'}
           onStatusChange={fetchStation}
         />
 
