@@ -13,11 +13,18 @@ import { useToast } from "@/hooks/use-toast";
 import { BiancottoLayout } from "@/components/BiancottoLayout";
 import { useSessionCentre } from "@/hooks/useSessionCentre";
 import { QRScanner } from "@/components/QRScanner";
+import { ReservationSystem } from "@/components/ReservationSystem";
 
 interface StationData {
   id: string;
   name: string;
   description: string;
+  occupation?: {
+    id: string;
+    status: 'libre' | 'occupee' | 'fermee';
+    by_centre_id: string;
+    since: string;
+  };
   activity?: {
     id: string;
     name: string;
@@ -71,6 +78,12 @@ export default function Station() {
         .from('station')
         .select(`
           *,
+          occupation (
+            id,
+            status,
+            by_centre_id,
+            since
+          ),
           activity (
             id,
             name,
@@ -94,10 +107,11 @@ export default function Station() {
 
       if (error) throw error;
       
-      // Transformer les données pour avoir riddle comme objet unique
+      // Transformer les données pour avoir riddle comme objet unique et occupation
       const transformedData = {
         ...data,
-        riddle: Array.isArray(data.riddle) && data.riddle.length > 0 ? data.riddle[0] : undefined
+        riddle: Array.isArray(data.riddle) && data.riddle.length > 0 ? data.riddle[0] : undefined,
+        occupation: Array.isArray(data.occupation) && data.occupation.length > 0 ? data.occupation[0] : undefined
       };
       
       setStation(transformedData);
@@ -382,6 +396,14 @@ export default function Station() {
             </CardContent>
           </Card>
         )}
+
+        {/* Système de réservation */}
+        <ReservationSystem
+          stationId={station.id}
+          stationName={station.name}
+          currentStatus={station.occupation?.status || 'libre'}
+          onStatusChange={fetchStation}
+        />
 
         {/* Onglets Activité / Énigmes */}
         <Tabs defaultValue="activity" className="w-full">
