@@ -114,7 +114,7 @@ export default function Stations() {
           {canCreateStations() && (
             <Button 
               className="bg-gradient-ocean hover:shadow-medium transition-all"
-              onClick={() => navigate('/station/new')}
+              onClick={() => navigate('/station-detail/new')}
             >
               <Waves className="w-4 h-4 mr-2" />
               Nouvelle Station
@@ -182,13 +182,24 @@ export default function Stations() {
                       QR Code
                     </Button>
                     
-                    <Button 
-                      size="sm" 
-                      className="bg-gradient-ocean hover:shadow-soft transition-all"
-                      onClick={() => navigate(`/station/${station.id}`)}
-                    >
-                      Ouvrir
-                    </Button>
+                    <div className="flex gap-2">
+                      {canCreateStations() && (
+                        <Button 
+                          variant="outline"
+                          size="sm" 
+                          onClick={() => navigate(`/station-detail/${station.id}`)}
+                        >
+                          Gérer
+                        </Button>
+                      )}
+                      <Button 
+                        size="sm" 
+                        className="bg-gradient-ocean hover:shadow-soft transition-all"
+                        onClick={() => navigate(`/station/${station.id}`)}
+                      >
+                        Ouvrir
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

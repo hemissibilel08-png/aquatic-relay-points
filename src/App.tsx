@@ -11,12 +11,14 @@ import Auth from "./pages/Auth";
 import Centre from "./pages/Centre";
 import Centres from "./pages/Centres";
 import Stations from "./pages/Stations";
+import Station from "./pages/Station";
 import StationDetail from "./pages/StationDetail";
 import Enigmes from "./pages/Enigmes";
 import Facilitateurs from "./pages/Facilitateurs";
 import Rev from "./pages/Rev";
 import Admin from "./pages/Admin";
 import Records from "./pages/Records";
+import Historique from "./pages/Historique";
 import NotFound from "./pages/NotFound";
 import { QRScanner } from "./components/QRScanner";
 
@@ -88,7 +90,7 @@ const App = () => (
             } />
             <Route path="/station/:id" element={
               <ProtectedRoute>
-                <StationDetail />
+                <Station />
               </ProtectedRoute>
             } />
             <Route path="/enigmes" element={
@@ -99,6 +101,18 @@ const App = () => (
             <Route path="/records" element={
               <ProtectedRoute>
                 <Records />
+              </ProtectedRoute>
+            } />
+            <Route path="/station-detail/:id" element={
+              <ProtectedRoute>
+                <RoleProtectedRoute requireAdmin>
+                  <StationDetail />
+                </RoleProtectedRoute>
+              </ProtectedRoute>
+            } />
+            <Route path="/historique" element={
+              <ProtectedRoute>
+                <Historique />
               </ProtectedRoute>
             } />
             <Route path="/scanner" element={

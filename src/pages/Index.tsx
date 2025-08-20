@@ -127,6 +127,13 @@ const Index = () => {
       subtitle: "Découvrez les activités maritimes",
       actions: [
         {
+          title: "Mon Historique",
+          description: "Voir toutes les activités réalisées et les points gagnés",
+          icon: Trophy,
+          action: () => navigate('/historique'),
+          gradient: "bg-gradient-coral"
+        },
+        {
           title: "Scanner une Station",
           description: "Scanner le QR code pour commencer une activité",
           icon: Activity,
